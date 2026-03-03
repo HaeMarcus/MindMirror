@@ -135,12 +135,12 @@ export default function ChatWindow() {
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-2xl mx-auto">
+    <div className="flex flex-col h-screen w-full max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto">
       {/* Nickname Prompt */}
       {showNicknamePrompt && <NicknamePrompt onConfirm={handleNicknameConfirm} />}
 
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
+      <header className="flex items-center justify-between px-4 lg:px-8 py-3 border-b border-gray-200 bg-white">
         <div>
           <h1 className="text-lg font-bold text-gray-800">MindMirror</h1>
           <p className="text-xs text-gray-400">基于多源数据的 AI 觉察助手{nickname && ` · ${nickname}`}</p>
@@ -168,7 +168,7 @@ export default function ChatWindow() {
       </header>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 bg-[#f4f7f5]">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 lg:px-8 py-4 bg-[#f4f7f5]">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
             <div className="text-7xl mb-4">🪞</div>
@@ -208,7 +208,7 @@ export default function ChatWindow() {
       </div>
 
       {/* Quick Actions + Input */}
-      <div className="border-t border-gray-200 bg-white px-4 pt-3 pb-4">
+      <div className="border-t border-gray-200 bg-white px-4 lg:px-8 pt-3 pb-4">
         <div className="mb-3">
           <QuickActions onSelect={handleSend} disabled={isStreaming} />
         </div>

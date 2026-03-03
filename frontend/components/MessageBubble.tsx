@@ -107,7 +107,7 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
   if (role === "user") {
     return (
       <div className="flex justify-end mb-4">
-        <div className="max-w-[75%] rounded-2xl rounded-br-md bg-[#8a9a7e] text-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">
+        <div className="max-w-[75%] lg:max-w-[60%] rounded-2xl rounded-br-md bg-[#8a9a7e] text-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">
           {content}
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
   if (sections.length >= 1) {
     return (
       <div className="flex justify-start mb-4">
-        <div className="max-w-[85%]">
+        <div className="max-w-[85%] lg:max-w-[75%]">
           {preamble && (
             <div className="rounded-2xl rounded-bl-md bg-white border border-gray-200 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm mb-3">
               {stripMarkdown(preamble)}
