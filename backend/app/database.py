@@ -37,6 +37,13 @@ CREATE TABLE IF NOT EXISTS memory (
     value TEXT NOT NULL,
     updated_at TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id INTEGER NOT NULL,
+    rating TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+);
 """
 
 
@@ -140,9 +147,10 @@ def get_chunks_by_faiss_ids(faiss_ids: list[int]) -> list[dict]:
 
 # ---- Messages CRUD ----
 
-def add_message(role: str, content: str):
+def add_message(role: str, content: str) -> int:
     with get_db() as db:
-        db.execute("INSERT INTO messages (role, content) VALUES (?, ?)", (role, content))
+        cursor = db.execute("INSERT INTO messages (role, content) VALUES (?, ?)", (role, content))
+        return cursor.lastrowid
 
 
 def get_recent_messages(limit: int = 30) -> list[dict]:
@@ -175,10 +183,22 @@ def set_memory(key: str, value: str):
         )
 
 
+def add_feedback(message_id: int, rating: str):
+    with get_db() as db:
+        db.execute("INSERT INTO feedback (message_id, rating) VALUES (?, ?)", (message_id, rating))
+
+
+def get_feedback_stats() -> dict:
+    with get_db() as db:
+        rows = db.execute("SELECT rating, COUNT(*) as cnt FROM feedback GROUP BY rating").fetchall()
+        return {r["rating"]: r["cnt"] for r in rows}
+
+
 def clear_all_data():
-    """Clear all user data: messages, memory, documents, chunks."""
+    """Clear all user data: messages, memory, documents, chunks, feedback."""
     with get_db() as db:
         db.execute("DELETE FROM messages")
         db.execute("DELETE FROM memory")
         db.execute("DELETE FROM chunks")
         db.execute("DELETE FROM documents")
+        db.execute("DELETE FROM feedback")

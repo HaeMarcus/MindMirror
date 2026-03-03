@@ -9,7 +9,7 @@ from app.memory import (
     get_short_memory, get_rolling_summary, get_user_profile,
     should_update_summary, save_rolling_summary, save_user_profile,
 )
-from app.database import add_message, get_recent_messages, clear_all_data
+from app.database import add_message, get_recent_messages, clear_all_data, add_feedback, get_feedback_stats
 from app.llm import chat_stream, generate_rolling_summary, update_user_profile
 
 router = APIRouter()
@@ -46,12 +46,12 @@ async def chat(req: ChatRequest):
             full_response.append(chunk)
             yield f"data: {json.dumps(chunk)}\n\n"
 
-        # Signal end
-        yield "data: [DONE]\n\n"
-
         # 5. Save assistant response
         assistant_text = "".join(full_response)
-        add_message("assistant", assistant_text)
+        msg_id = add_message("assistant", assistant_text)
+
+        # Signal end with message_id
+        yield f"event: done\ndata: {json.dumps({'message_id': msg_id})}\n\n"
 
         # 6. Trigger memory updates if needed
         if should_update_summary():
@@ -83,3 +83,23 @@ async def reset_all():
     clear_all_data()
     rebuild_index(np.array([], dtype=np.float32).reshape(0, 512))
     return {"status": "ok", "message": "所有数据已清除"}
+
+
+class FeedbackRequest(BaseModel):
+    message_id: int
+    rating: str  # "accurate" or "inaccurate"
+
+
+@router.post("/feedback")
+async def submit_feedback(req: FeedbackRequest):
+    """Record user feedback on assistant response accuracy."""
+    if req.rating not in ("accurate", "inaccurate"):
+        return {"error": "rating must be 'accurate' or 'inaccurate'"}
+    add_feedback(req.message_id, req.rating)
+    return {"status": "ok"}
+
+
+@router.get("/feedback/stats")
+async def feedback_stats():
+    """Get feedback statistics."""
+    return get_feedback_stats()

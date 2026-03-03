@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { uploadFile } from "@/lib/api";
+import { uploadFile, UploadProgress } from "@/lib/api";
 
 interface UploadResult {
   source_name: string;
@@ -18,6 +18,7 @@ interface UploadPanelProps {
 
 export default function UploadPanel({ isOpen, onClose }: UploadPanelProps) {
   const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [results, setResults] = useState<UploadResult[]>([]);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -28,11 +29,12 @@ export default function UploadPanel({ isOpen, onClose }: UploadPanelProps) {
     if (!files || files.length === 0) return;
     setError("");
     setUploading(true);
+    setProgress(null);
 
     const newResults: UploadResult[] = [];
     for (const file of Array.from(files)) {
       try {
-        const res = await uploadFile(file);
+        const res = await uploadFile(file, (p) => setProgress(p));
         newResults.push(res);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "上传失败";
@@ -42,6 +44,7 @@ export default function UploadPanel({ isOpen, onClose }: UploadPanelProps) {
 
     setResults((prev) => [...newResults, ...prev]);
     setUploading(false);
+    setProgress(null);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -66,8 +69,8 @@ export default function UploadPanel({ isOpen, onClose }: UploadPanelProps) {
         <div
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
-          onClick={() => fileRef.current?.click()}
-          className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-colors"
+          onClick={() => !uploading && fileRef.current?.click()}
+          className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors ${uploading ? "border-[#8a9a7e] bg-[#f4f7f5]" : "border-gray-300 cursor-pointer hover:border-gray-400 hover:bg-gray-50"}`}
         >
           <input
             ref={fileRef}
@@ -77,8 +80,21 @@ export default function UploadPanel({ isOpen, onClose }: UploadPanelProps) {
             className="hidden"
             onChange={(e) => handleFiles(e.target.files)}
           />
-          {uploading ? (
-            <p className="text-gray-500 text-sm">处理中...</p>
+          {uploading && progress ? (
+            <div>
+              <p className="text-[#7a8a72] text-sm font-medium mb-2">{progress.message}</p>
+              <p className="text-[#8a9a7e] text-xs mb-2">
+                当前进度：{progress.current} / {progress.total}
+              </p>
+              <div className="w-full bg-gray-200 rounded-full h-1.5">
+                <div
+                  className="bg-[#8a9a7e] h-1.5 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }}
+                />
+              </div>
+            </div>
+          ) : uploading ? (
+            <p className="text-gray-500 text-sm">解析文件中...</p>
           ) : (
             <>
               <p className="text-gray-500 text-sm mb-1">拖拽文件到此处，或点击选择</p>

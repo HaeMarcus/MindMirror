@@ -23,6 +23,11 @@ def encode(texts: list[str]) -> np.ndarray:
     return np.array(embeddings, dtype=np.float32)
 
 
+def encode_batch(texts: list[str]) -> np.ndarray:
+    """Encode a small batch — same as encode but named for clarity in progress tracking."""
+    return encode(texts)
+
+
 def get_index() -> faiss.IndexFlatIP:
     global _index, _next_id
     if _index is None:

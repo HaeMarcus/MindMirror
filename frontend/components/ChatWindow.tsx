@@ -5,11 +5,13 @@ import MessageBubble from "./MessageBubble";
 import QuickActions from "./QuickActions";
 import UploadPanel from "./UploadPanel";
 import DataPanel from "./DataPanel";
-import { sendMessage, getMessages, resetAll } from "@/lib/api";
+import { sendMessage, getMessages, resetAll, submitFeedback } from "@/lib/api";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  messageId?: number | null;
+  feedbackGiven?: "accurate" | "inaccurate" | null;
 }
 
 export default function ChatWindow() {
@@ -35,7 +37,10 @@ export default function ChatWindow() {
   // Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isStreaming]);
+
+  // Buffer for streaming content (not displayed until done)
+  const streamBuffer = useRef("");
 
   const handleSend = async (text?: string) => {
     const msg = (text || input).trim();
@@ -45,24 +50,23 @@ export default function ChatWindow() {
     setMessages((prev) => [...prev, { role: "user", content: msg }]);
     setIsStreaming(true);
     setStatusText("正在处理...");
-
-    // Add placeholder for streaming
-    setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+    streamBuffer.current = "";
 
     try {
       await sendMessage(
         msg,
         (chunk) => {
-          setStatusText("");
-          setMessages((prev) => {
-            const last = prev[prev.length - 1];
-            if (last.role === "assistant") {
-              return [...prev.slice(0, -1), { ...last, content: last.content + chunk }];
-            }
-            return prev;
-          });
+          streamBuffer.current += chunk;
+          // Update status to show generation progress
+          setStatusText("回答生成中...");
         },
-        () => {
+        (messageId) => {
+          // Streaming done — add the full message at once for instant color card render
+          const fullContent = streamBuffer.current;
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: fullContent, messageId, feedbackGiven: null },
+          ]);
           setIsStreaming(false);
           setStatusText("");
         },
@@ -72,13 +76,24 @@ export default function ChatWindow() {
       );
     } catch {
       setIsStreaming(false);
-      setMessages((prev) => {
-        const last = prev[prev.length - 1];
-        if (last.role === "assistant" && !last.content) {
-          return [...prev.slice(0, -1), { ...last, content: "抱歉，请求出错了。请检查后端服务是否正常运行。" }];
-        }
-        return prev;
-      });
+      setStatusText("");
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "抱歉，请求出错了。请检查后端服务是否正常运行。" },
+      ]);
+    }
+  };
+
+  const handleFeedback = async (index: number, rating: "accurate" | "inaccurate") => {
+    const msg = messages[index];
+    if (!msg.messageId) return;
+    setMessages((prev) =>
+      prev.map((m, i) => (i === index ? { ...m, feedbackGiven: rating } : m))
+    );
+    try {
+      await submitFeedback(msg.messageId, rating);
+    } catch {
+      // silently fail
     }
   };
 
@@ -105,7 +120,7 @@ export default function ChatWindow() {
       <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
         <div>
           <h1 className="text-lg font-bold text-gray-800">MindMirror</h1>
-          <p className="text-xs text-gray-400">AI 自我洞察助手</p>
+          <p className="text-xs text-gray-400">基于多源数据的 AI 觉察助手</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -139,9 +154,15 @@ export default function ChatWindow() {
           </div>
         )}
         {messages.map((msg, i) => (
-          <MessageBubble key={i} role={msg.role} content={msg.content} />
+          <MessageBubble
+            key={i}
+            role={msg.role}
+            content={msg.content}
+            feedbackGiven={msg.feedbackGiven}
+            onFeedback={msg.role === "assistant" && msg.messageId ? (rating) => handleFeedback(i, rating) : undefined}
+          />
         ))}
-        {isStreaming && messages[messages.length - 1]?.content === "" && (
+        {isStreaming && (
           <div className="flex justify-start mb-4">
             <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
               <div className="flex items-center gap-2">
