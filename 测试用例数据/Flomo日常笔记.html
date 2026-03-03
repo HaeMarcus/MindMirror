@@ -1,0 +1,214 @@
+
+    <html>
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>flomo · 浮墨笔记</title>
+        <style type="text/css">
+          * { margin: 0; padding: 0; }
+          body { background: #fafafa; }
+          header .logo { text-align: center; border-bottom: 1px solid #efefef; }
+          header .top { display: flex; justify-content: space-between; align-items: center; }
+          header .logo, header .top .user { padding: 40px 0; }
+          header .top .user .name { color: #454545; font-size: 16px; }
+          header .top .user .date { font-size: 12px; color: #9d9d9d; }
+          header .top .filter { display: none; justify-content: space-between; align-items: center; }
+          header .top .filter button { padding: 9px 10px; background: #30cf79; border-radius: 3px; color: #fff; font-size: 14px; border: none; cursor: pointer; }
+          header, .memos { width: 600px; margin: 0 auto; }
+          .memos h1 { margin-top: 30px; }
+          .memo { margin: 20px 0; background: #fff; padding: 20px; border-radius: 6px; word-wrap: break-word; }
+          .memo:hover { box-shadow: 0px 2px 10px #dddddd; }
+          .memo .time { color: #8d8d8d; font-size: 12px; }
+          .memo .content { color: #323232; font-size: 14px; }
+          .memo .content p { line-height: 1.8; min-height: 20px; margin: 0; }
+          .memo .content ul, .memo .content ol { padding-inline-start: 22px; margin: 0; }
+          .memo .content li { line-height: 1.8; }
+          .memo .files img { max-width: 100%; border: 1px solid #e6e6e6; border-radius: 4px; margin: 6px 0; }
+          .custom-select { position: relative; font-size: 14px; color: #9d9d9d; background: #efefef; border-radius: 3px; border: none; margin-right: 10px; }
+          .custom-select select { display: none; }
+          .select-selected { background: #efefef; color: #9d9d9d; }
+          .select-selected:after { position: absolute; content: ""; top: 14px; right: 10px; width: 0; height: 0; border: 6px solid transparent; border-color: #7d7d7d transparent transparent transparent; }
+          .select-selected.select-arrow-active:after { border-color: transparent transparent #7d7d7d transparent; top: 7px; }
+          .select-items div, .select-selected { color: rgba(157, 157, 157, 1); padding: 9px 12px; font-size: 14px; color: #9d9d9d; border: none; cursor: pointer; border-radius: 3px; border: none; width: 120px; user-select: none; }
+          .select-items { position: absolute; background-color: white; top: 100%; left: 0; right: 0; z-index: 99; max-height: 200px; overflow-y: auto; overflow-x: hidden; box-shadow: 0px 4px 2px #dddddd; }
+          .select-items::-webkit-scrollbar { width: 5px; }
+          .select-items::-webkit-scrollbar-track { background: #f1f1f1; }
+          .select-items::-webkit-scrollbar-thumb { background: #888; }
+          .select-hide { display: none; }
+          .select-items div:hover, .same-as-selected { background-color: rgba(0, 0, 0, 0.1); }
+            /* --- Audio Player Styles --- */
+          .audio-player {
+            width: 100%;
+            background: #f7f7f7; /* 替换 var(--commentItemBg) 为一个具体的颜色值 */
+            border-radius: 6px;
+            margin-top: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+          }
+
+          .audio-player audio {
+            /* 设置宽度确保它充满容器 */
+            width: 100%;
+          }
+
+          /* 音频转录内容的样式 */
+          .audio-player__content {
+            padding-top: 10px;
+            margin-top: 10px;
+            border-top: 1px solid #eeeeee; /* 添加一个分割线，使其更清晰 */
+            font-size: 14px;
+            color: #555555; /* 替换 #9d9d9d 为一个更清晰的颜色 */
+            line-height: 1.8;
+            white-space: pre-wrap; /* 保留换行和空格 */
+            word-wrap: break-word; /* 确保长文本能正常换行 */
+          } 
+          </style>
+      </head>
+      <body>
+        <header>
+          <div class="logo">
+            <svg width="96" height="31" viewBox="0 0 96 31" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M4.87056 9.11086C4.87056 6.25522 5.89594 4.89539 7.81854 4.89539H12.5609V0H7.81854C2.69163 0 0 3.39957 0 9.11086V10.8786V14.9581V30.3242H4.87056V15.3661H12.5609V10.8786H4.87056V9.11086ZM79.5937 27.8765C81.3881 29.7803 83.6952 30.7321 86.3868 30.7321C89.0785 30.7321 91.2574 29.7803 93.18 27.8765C95.1026 25.9727 95.9998 23.525 95.9998 20.5334C95.9998 17.5418 94.9744 15.0941 93.18 13.1903C91.2574 11.2866 89.0785 10.3347 86.3868 10.3347C83.6952 10.3347 81.5163 11.2866 79.5937 13.1903C77.6711 15.0941 76.7739 17.5418 76.7739 20.5334C76.7739 23.525 77.7993 25.9727 79.5937 27.8765ZM81.6444 20.5334C81.6444 17.5418 83.6952 15.502 86.3868 15.502C89.0785 15.502 91.2574 17.5418 91.1292 20.5334C91.1292 23.661 89.0785 25.7008 86.3868 25.7008C83.6952 25.7008 81.6444 23.661 81.6444 20.5334ZM32.8147 30.7321C30.1231 30.7321 27.816 29.7802 26.0215 27.8765C24.2271 25.9727 23.2017 23.661 23.2017 20.6694C23.2017 17.6777 24.0989 15.23 26.0215 13.3263C27.9441 11.4225 30.1231 10.4706 32.8147 10.4706C35.5063 10.4706 37.6853 11.4225 39.6079 13.3263C41.5305 15.23 42.4277 17.6777 42.4277 20.6694C42.4277 23.661 41.5305 26.1087 39.6079 28.0124C37.6853 29.9162 35.5063 30.7321 32.8147 30.7321ZM32.8147 15.502C30.1231 15.502 28.0723 17.5418 28.0723 20.5334C28.0723 23.661 30.1231 25.7007 32.8147 25.7007C35.5063 25.7007 37.5571 23.661 37.5571 20.5334C37.5571 17.5418 35.5063 15.502 32.8147 15.502ZM62.0358 19.9894V30.4601H57.2934V19.7175C57.2934 17.1338 55.8835 15.502 53.9609 15.502C51.7819 15.502 50.1157 16.8618 50.1157 19.9894V30.4601H45.3733V10.8786H50.1157V13.7342C51.0129 11.5585 53.32 10.4706 55.3708 10.4706C58.3187 10.6066 60.2413 11.8305 61.2667 14.1422C62.5484 11.6945 64.471 10.4706 67.0345 10.4706C71.5205 10.4706 74.084 13.5982 74.084 19.3095V30.4601H69.3416V19.8535C69.3416 17.1338 67.9317 15.502 65.8809 15.502C63.5738 15.502 62.0358 17.1338 62.0358 19.9894ZM15.6366 4.89539V0H20.379V30.4602H15.6366V7.2071V4.89539Z" fill="#202020"/>
+            </svg>
+          </div>
+          <div class="top">
+            <div class="user">
+              <div class="name">@Marcus</div>
+              <div class="date">于 2026-3-2 导出 2 条 MEMO</div>
+            </div>
+            <div class="filter">
+              <div class='custom-select'>
+                <select name="date" id="date">
+                  <option value="">选择年月</option>
+                  <option value="2025-12">2025-12</option><option value="2025-10">2025-10</option>
+                </select>
+              </div>
+              <div class='custom-select'>
+                <select name="tag" id="tag">
+                  <option value="">选择标签</option>
+                  <option value="事业发展">事业发展</option><option value="形象管理">形象管理</option>
+                </select>
+              </div>
+              <button>筛选</button>
+            </div>
+          </div>
+        </header>
+        <div class="memos">
+    <div class="memo">
+      <div class="time">2025-12-03 19:31:35</div>
+      <div class="content"><p>#形象管理 今天烫了头发 理发师稍微误判了整体的长度 但是还算ok 正常发挥 没有翻车 可能就是稍微会维系效果短一点 但后面也可以先软化再练下夹板 还是得掌握技能</p><p>另外就是头皮好很多了 基本没有痘了 说明我整个人健康程度是向上走的 2025真的过得很顺遂很开心 2024和23的绝大部分时间也都痛苦崩溃焦虑 今年算是好好放松了一下 遵从并满足自己最本能的欲望 爽</p></div>
+      <div class="files">
+        
+        
+      </div>
+    </div>
+  
+    <div class="memo">
+      <div class="time">2025-10-10 10:01:07</div>
+      <div class="content"><p>#事业发展 #形象管理 今天早上称体重 134斤 比之前瘦的时候胖了整整15斤 大部分都是内脏脂肪和脸部脂肪 基本上完全是今年长起来的 去年长期高强度暴走搭讪每天两万步加上精神崩溃痛苦 根本胖不起来 自己今年长胖的关键点就是自己租房之后 生活便利性过高 运动也几乎全部停滞 加上game彻底实现了情感自由也慢慢一点不在乎自己的形体 日子过得太舒心 整个体重就迅速膨胀 而且长期没买电子秤 都没注意到这个趋势 现在已经有点难控制了 这个体重必须当成重点问题本月冲刺突破 不然完全影响到我Game的心态了 会刺激我有些容貌焦虑</p><p>最近几天游了好几次泳 加起来一共四次 3579 确实做到了隔天游一次泳 确实很好坚持 中港31楼那个跑步机体验感太差了总感觉很容易摔 跑着没有安全感 还是骑个车去望江健身房吧 正好有几次卡还没用完 多做有氧 可以猛猛用椭圆仪</p><p>虽然这几次体重没明显变化 但短短四次游泳我已经感觉到肉眼可见的塑形效果了 还是很值得坚持 而且游泳还挺有趣的 每次去游没有任何阻力 果然人还是要找到适合自己的运动 这几个月要长期坚持 每次四十分钟挺好的</p><p>反正年末三个月一定要把运动狠狠添加到自己的生活中 一定要减脂瘦下去 我真的受不了现在这个体重了</p><p>最近每天说要早起也从来没起过 每次都还是被大脑狠狠控制了 其实翻下床去洗把脸一切就都解决了 我总是差这一点点冷启动 早上效率就不太高 明天开始还是要努力早起 多运动 让自己的生活更加健康</p></div>
+      <div class="files">
+        
+        
+      </div>
+    </div>
+  </div>
+        <script>
+          // 检测 JS 是否可执行，如果可执行则显示 filter
+          (function() {
+            try {
+              const filterEl = document.querySelector(".filter");
+              if (filterEl) {
+                filterEl.style.display = "flex";
+              }
+            } catch (e) {
+              // JS 不可执行时保持隐藏状态
+            }
+          })();
+          
+          const memos = document.querySelectorAll(".memo");
+          const dateSelect = document.querySelector("#date");
+          const tagSelect = document.querySelector("#tag");
+          const filterBtn = document.querySelector("button");
+          filterBtn.addEventListener("click", () => {
+            const date = dateSelect.value;
+            const tag = tagSelect.value;
+            memos.forEach((memo) => {
+              const time = memo.querySelector(".time").innerText;
+              const content = memo.querySelector(".content").innerText;
+              const isDateMatch = !date || time.includes(date);
+              const isTagMatch = !tag || content.includes(tag);
+              memo.style.display = (isDateMatch && isTagMatch) ? "block" : "none";
+            });
+          });
+          
+          // 自定义选择框功能
+          var x, i, j, l, ll, selElmnt, a, b, c;
+          x = document.getElementsByClassName("custom-select");
+          l = x.length;
+          for (i = 0; i < l; i++) {
+            selElmnt = x[i].getElementsByTagName("select")[0];
+            ll = selElmnt.length;
+            a = document.createElement("DIV");
+            a.setAttribute("class", "select-selected");
+            a.innerHTML = selElmnt.options[selElmnt.selectedIndex].innerHTML;
+            x[i].appendChild(a);
+            b = document.createElement("DIV");
+            b.setAttribute("class", "select-items select-hide");
+            for (j = 0; j < ll; j++) {
+              c = document.createElement("DIV");
+              c.innerHTML = selElmnt.options[j].innerHTML;
+              c.addEventListener("click", function (e) {
+                var y, i, k, s, h, sl, yl;
+                s = this.parentNode.parentNode.getElementsByTagName("select")[0];
+                sl = s.length;
+                h = this.parentNode.previousSibling;
+                for (i = 0; i < sl; i++) {
+                  if (s.options[i].innerHTML == this.innerHTML) {
+                    s.selectedIndex = i;
+                    h.innerHTML = this.innerHTML;
+                    y = this.parentNode.getElementsByClassName("same-as-selected");
+                    yl = y.length;
+                    for (k = 0; k < yl; k++) {
+                      y[k].removeAttribute("class");
+                    }
+                    this.setAttribute("class", "same-as-selected");
+                    break;
+                  }
+                }
+                h.click();
+              });
+              b.appendChild(c);
+            }
+            x[i].appendChild(b);
+            a.addEventListener("click", function (e) {
+              e.stopPropagation();
+              closeAllSelect(this);
+              this.nextSibling.classList.toggle("select-hide");
+              this.classList.toggle("select-arrow-active");
+            });
+          }
+          
+          function closeAllSelect(elmnt) {
+            var x, y, i, xl, yl, arrNo = [];
+            x = document.getElementsByClassName("select-items");
+            y = document.getElementsByClassName("select-selected");
+            xl = x.length;
+            yl = y.length;
+            for (i = 0; i < yl; i++) {
+              if (elmnt == y[i]) {
+                arrNo.push(i);
+              } else {
+                y[i].classList.remove("select-arrow-active");
+              }
+            }
+            for (i = 0; i < xl; i++) {
+              if (arrNo.indexOf(i)) {
+                x[i].classList.add("select-hide");
+              }
+            }
+          }
+
+          document.addEventListener("click", closeAllSelect);
+        </script>
+      </body>
+    </html>
+  
