@@ -10,9 +10,8 @@ interface MessageBubbleProps {
 
 const SECTION_LABELS = [
   { key: "核心洞察", color: "text-rose-600", bg: "bg-rose-50", icon: "◆" },
-  { key: "证据归因", color: "text-blue-600", bg: "bg-blue-50", icon: "◇" },
-  { key: "防御机制", color: "text-amber-600", bg: "bg-amber-50", icon: "△" },
-  { key: "实验性下一步", color: "text-emerald-600", bg: "bg-emerald-50", icon: "▷" },
+  { key: "模式识别", color: "text-violet-600", bg: "bg-violet-50", icon: "◇" },
+  { key: "证据归因", color: "text-blue-600", bg: "bg-blue-50", icon: "△" },
 ];
 
 function stripMarkdown(text: string): string {
@@ -71,7 +70,7 @@ function FeedbackButtons({
   if (!onFeedback) return null;
 
   return (
-    <div className="flex gap-2 mt-2">
+    <div className="flex gap-2 mt-2 justify-center">
       <button
         onClick={() => onFeedback("accurate")}
         disabled={!!feedbackGiven}
