@@ -76,6 +76,20 @@ def get_document(doc_id: str) -> Optional[dict]:
         return dict(row) if row else None
 
 
+def get_all_documents() -> list[dict]:
+    with get_db() as db:
+        rows = db.execute(
+            "SELECT doc_id, source_type, source_name, time_range_start, time_range_end, created_at FROM documents ORDER BY created_at DESC"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_chunk_count_by_doc(doc_id: str) -> int:
+    with get_db() as db:
+        row = db.execute("SELECT COUNT(*) as cnt FROM chunks WHERE doc_id = ?", (doc_id,)).fetchone()
+        return row["cnt"]
+
+
 def delete_document(doc_id: str):
     with get_db() as db:
         db.execute("DELETE FROM chunks WHERE doc_id = ?", (doc_id,))
@@ -159,3 +173,12 @@ def set_memory(key: str, value: str):
             "INSERT OR REPLACE INTO memory (key, value, updated_at) VALUES (?, ?, datetime('now'))",
             (key, value)
         )
+
+
+def clear_all_data():
+    """Clear all user data: messages, memory, documents, chunks."""
+    with get_db() as db:
+        db.execute("DELETE FROM messages")
+        db.execute("DELETE FROM memory")
+        db.execute("DELETE FROM chunks")
+        db.execute("DELETE FROM documents")

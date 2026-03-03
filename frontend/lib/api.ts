@@ -81,3 +81,24 @@ export async function getMessages(): Promise<
   const data = await res.json();
   return data.messages || [];
 }
+
+export interface DocumentInfo {
+  doc_id: string;
+  source_type: string;
+  source_name: string;
+  chunk_count: number;
+  time_range_start: string | null;
+  time_range_end: string | null;
+  created_at: string;
+}
+
+export async function getDocuments(): Promise<DocumentInfo[]> {
+  const res = await fetch(`${API_BASE}/documents`);
+  const data = await res.json();
+  return data.documents || [];
+}
+
+export async function resetAll(): Promise<void> {
+  const res = await fetch(`${API_BASE}/reset`, { method: "DELETE" });
+  if (!res.ok) throw new Error("清除失败");
+}

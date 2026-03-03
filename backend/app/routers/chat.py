@@ -9,7 +9,7 @@ from app.memory import (
     get_short_memory, get_rolling_summary, get_user_profile,
     should_update_summary, save_rolling_summary, save_user_profile,
 )
-from app.database import add_message, get_recent_messages
+from app.database import add_message, get_recent_messages, clear_all_data
 from app.llm import chat_stream, generate_rolling_summary, update_user_profile
 
 router = APIRouter()
@@ -73,3 +73,13 @@ async def get_messages():
     """Get conversation history."""
     messages = get_recent_messages(limit=100)
     return {"messages": messages}
+
+
+@router.delete("/reset")
+async def reset_all():
+    """Clear all data: messages, memory, documents, FAISS index."""
+    from app.embedding import rebuild_index
+    import numpy as np
+    clear_all_data()
+    rebuild_index(np.array([], dtype=np.float32).reshape(0, 512))
+    return {"status": "ok", "message": "所有数据已清除"}

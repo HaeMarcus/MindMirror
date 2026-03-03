@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import MessageBubble from "./MessageBubble";
 import QuickActions from "./QuickActions";
 import UploadPanel from "./UploadPanel";
-import { sendMessage, getMessages } from "@/lib/api";
+import DataPanel from "./DataPanel";
+import { sendMessage, getMessages, resetAll } from "@/lib/api";
 
 interface Message {
   role: "user" | "assistant";
@@ -17,6 +18,7 @@ export default function ChatWindow() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [statusText, setStatusText] = useState("");
   const [showUpload, setShowUpload] = useState(false);
+  const [showData, setShowData] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Load history on mount
@@ -80,6 +82,16 @@ export default function ChatWindow() {
     }
   };
 
+  const handleReset = async () => {
+    if (!confirm("确定要清除所有数据吗？（对话历史、上传的文件、记忆都会被删除）")) return;
+    try {
+      await resetAll();
+      setMessages([]);
+    } catch {
+      alert("清除失败，请稍后重试");
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -95,21 +107,35 @@ export default function ChatWindow() {
           <h1 className="text-lg font-bold text-gray-800">MindMirror</h1>
           <p className="text-xs text-gray-400">AI 自我洞察助手</p>
         </div>
-        <button
-          onClick={() => setShowUpload(true)}
-          className="px-3 py-1.5 text-xs rounded-lg bg-gray-800 text-white hover:bg-gray-700 transition-colors"
-        >
-          导入数据
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleReset}
+            className="px-3 py-1.5 text-xs rounded-lg border border-[#a8b5a0] text-[#7a8a72] hover:bg-[#f0f4ee] transition-colors"
+          >
+            清除数据
+          </button>
+          <button
+            onClick={() => setShowData(true)}
+            className="px-3 py-1.5 text-xs rounded-lg border border-[#a8b5a0] text-[#7a8a72] hover:bg-[#f0f4ee] transition-colors"
+          >
+            当前数据库
+          </button>
+          <button
+            onClick={() => setShowUpload(true)}
+            className="px-3 py-1.5 text-xs rounded-lg bg-[#8a9a7e] text-white hover:bg-[#7a8a6e] transition-colors"
+          >
+            导入数据
+          </button>
+        </div>
       </header>
 
       {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 bg-[#f4f7f5]">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
-            <div className="text-4xl mb-3">🪞</div>
-            <p className="text-sm">导入你的数据，然后开始对话</p>
-            <p className="text-xs mt-1">支持 Flomo 导出、Markdown 文档、钱迹账单</p>
+            <div className="text-7xl mb-4">🪞</div>
+            <p className="text-base font-medium text-gray-500">导入你的数据，然后开始对话</p>
+            <p className="text-sm mt-2 text-gray-400">支持 日常记录（.html）、个人复盘（.md）、财务记账（.csv） 等多维数据</p>
           </div>
         )}
         {messages.map((msg, i) => (
@@ -152,7 +178,7 @@ export default function ChatWindow() {
           <button
             onClick={() => handleSend()}
             disabled={isStreaming || !input.trim()}
-            className="px-4 py-2.5 rounded-xl bg-gray-800 text-white text-sm font-medium hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2.5 rounded-xl bg-[#8a9a7e] text-white text-sm font-medium hover:bg-[#7a8a6e] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             发送
           </button>
@@ -161,8 +187,9 @@ export default function ChatWindow() {
         <p className="text-center text-xs text-gray-400 mt-2">🔒 隐私持续守护中 · 原始数据不上传</p>
       </div>
 
-      {/* Upload Panel */}
+      {/* Panels */}
       <UploadPanel isOpen={showUpload} onClose={() => setShowUpload(false)} />
+      <DataPanel isOpen={showData} onClose={() => setShowData(false)} />
     </div>
   );
 }

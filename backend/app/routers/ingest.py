@@ -3,7 +3,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.parsers.flomo_parser import parse_flomo_html
 from app.parsers.md_parser import parse_markdown
 from app.parsers.csv_parser import parse_ledger_csv
-from app.database import insert_document, insert_chunks, delete_document
+from app.database import insert_document, insert_chunks, delete_document, get_all_documents, get_chunk_count_by_doc
 from app.embedding import encode, add_vectors
 
 router = APIRouter()
@@ -57,3 +57,14 @@ async def ingest_file(file: UploadFile = File(...)):
         "time_range_start": doc.get("time_range_start"),
         "time_range_end": doc.get("time_range_end"),
     }
+
+
+@router.get("/documents")
+async def list_documents():
+    """List all imported documents with chunk counts."""
+    docs = get_all_documents()
+    result = []
+    for doc in docs:
+        doc["chunk_count"] = get_chunk_count_by_doc(doc["doc_id"])
+        result.append(doc)
+    return {"documents": result}
