@@ -3,6 +3,7 @@
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
+  isStreaming?: boolean;
   feedbackGiven?: "accurate" | "inaccurate" | null;
   onFeedback?: (rating: "accurate" | "inaccurate") => void;
 }
@@ -91,7 +92,7 @@ function FeedbackButtons({
   );
 }
 
-export default function MessageBubble({ role, content, feedbackGiven, onFeedback }: MessageBubbleProps) {
+export default function MessageBubble({ role, content, isStreaming, feedbackGiven, onFeedback }: MessageBubbleProps) {
   if (role === "user") {
     return (
       <div className="flex justify-end mb-4">
@@ -102,8 +103,9 @@ export default function MessageBubble({ role, content, feedbackGiven, onFeedback
     );
   }
 
-  // Assistant: try to parse structured output
-  const sections = parseInsightSections(content);
+  // Assistant: during streaming, always show plain text (typewriter effect)
+  // After streaming ends, parse into color cards
+  const sections = isStreaming ? [] : parseInsightSections(content);
 
   if (sections.length >= 2) {
     return (

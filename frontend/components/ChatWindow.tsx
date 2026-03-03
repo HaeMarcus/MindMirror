@@ -25,6 +25,8 @@ export default function ChatWindow() {
   const [showUpload, setShowUpload] = useState(false);
   const [showData, setShowData] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const streamBuffer = useRef("");
+  const [streamingContent, setStreamingContent] = useState("");
 
   // Initialize nickname from localStorage
   useEffect(() => {
@@ -51,10 +53,7 @@ export default function ChatWindow() {
   // Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, isStreaming]);
-
-  // Buffer for streaming content (not displayed until done)
-  const streamBuffer = useRef("");
+  }, [messages, isStreaming, streamingContent]);
 
   const handleNicknameConfirm = (name: string) => {
     setNickname(name);
@@ -77,7 +76,8 @@ export default function ChatWindow() {
         nickname,
         (chunk) => {
           streamBuffer.current += chunk;
-          setStatusText("回答生成中...");
+          setStreamingContent(streamBuffer.current);
+          setStatusText("");
         },
         (messageId) => {
           const fullContent = streamBuffer.current;
@@ -87,6 +87,7 @@ export default function ChatWindow() {
           ]);
           setIsStreaming(false);
           setStatusText("");
+          setStreamingContent("");
         },
         (status) => {
           setStatusText(status);
@@ -126,13 +127,6 @@ export default function ChatWindow() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("mm_nickname");
-    setNickname(null);
-    setMessages([]);
-    setShowNicknamePrompt(true);
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -152,12 +146,6 @@ export default function ChatWindow() {
           <p className="text-xs text-gray-400">基于多源数据的 AI 觉察助手{nickname && ` · ${nickname}`}</p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={handleLogout}
-            className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 transition-colors"
-          >
-            切换身份
-          </button>
           <button
             onClick={handleReset}
             className="px-3 py-1.5 text-xs rounded-lg border border-[#a8b5a0] text-[#7a8a72] hover:bg-[#f0f4ee] transition-colors"
@@ -198,20 +186,24 @@ export default function ChatWindow() {
           />
         ))}
         {isStreaming && (
-          <div className="flex justify-start mb-4">
-            <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+          streamingContent ? (
+            <MessageBubble role="assistant" content={streamingContent} isStreaming />
+          ) : (
+            <div className="flex justify-start mb-4">
+              <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                  </div>
+                  {statusText && (
+                    <span className="text-xs text-gray-400">{statusText}</span>
+                  )}
                 </div>
-                {statusText && (
-                  <span className="text-xs text-gray-400">{statusText}</span>
-                )}
               </div>
             </div>
-          </div>
+          )
         )}
       </div>
 
