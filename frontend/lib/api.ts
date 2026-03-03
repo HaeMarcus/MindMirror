@@ -60,7 +60,11 @@ export async function sendMessage(
           onDone();
           return;
         } else {
-          onChunk(data);
+          try {
+            onChunk(JSON.parse(data));
+          } catch {
+            onChunk(data);
+          }
         }
         currentEvent = "";
       }

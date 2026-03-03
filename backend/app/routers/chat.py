@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -42,7 +44,7 @@ async def chat(req: ChatRequest):
         full_response = []
         for chunk in chat_stream(question, short_memory, rolling_summary, user_profile, source_context):
             full_response.append(chunk)
-            yield f"data: {chunk}\n\n"
+            yield f"data: {json.dumps(chunk)}\n\n"
 
         # Signal end
         yield "data: [DONE]\n\n"
