@@ -25,15 +25,27 @@ function stripMarkdown(text: string): string {
 
 function parseInsightSections(content: string) {
   const sections: { label: string; content: string; color: string; bg: string; icon: string }[] = [];
-  const remaining = content;
+  let preamble = "";
+
+  // Find the first section marker to extract preamble
+  let firstMarkerIdx = -1;
+  for (const sec of SECTION_LABELS) {
+    const idx = content.indexOf(`【${sec.key}】`);
+    if (idx !== -1 && (firstMarkerIdx === -1 || idx < firstMarkerIdx)) {
+      firstMarkerIdx = idx;
+    }
+  }
+  if (firstMarkerIdx > 0) {
+    preamble = content.slice(0, firstMarkerIdx).trim();
+  }
 
   for (const sec of SECTION_LABELS) {
     const marker = `【${sec.key}】`;
-    const idx = remaining.indexOf(marker);
+    const idx = content.indexOf(marker);
     if (idx === -1) continue;
 
     // Find end: either next 【 or end of string
-    const afterMarker = remaining.slice(idx + marker.length);
+    const afterMarker = content.slice(idx + marker.length);
     const nextIdx = afterMarker.search(/【[^【】]+】/);
     const sectionContent = nextIdx >= 0 ? afterMarker.slice(0, nextIdx) : afterMarker;
 
@@ -46,7 +58,7 @@ function parseInsightSections(content: string) {
     });
   }
 
-  return sections;
+  return { sections, preamble };
 }
 
 function FeedbackButtons({
@@ -103,17 +115,22 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
     );
   }
 
-  // Assistant: during streaming, always show plain text (typewriter effect)
-  // After streaming ends, parse into color cards
-  const sections = isStreaming ? [] : parseInsightSections(content);
+  // Always parse sections — works for both streaming and completed messages
+  // During streaming, cards appear progressively as section markers arrive
+  const { sections, preamble } = parseInsightSections(content);
 
-  if (sections.length >= 2) {
+  if (sections.length >= 1) {
     return (
       <div className="flex justify-start mb-4">
         <div className="max-w-[85%]">
+          {preamble && (
+            <div className="rounded-2xl rounded-bl-md bg-white border border-gray-200 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm mb-3">
+              {stripMarkdown(preamble)}
+            </div>
+          )}
           <div className="space-y-3">
             {sections.map((sec, i) => (
-              <div key={i} className={`${sec.bg} rounded-xl px-4 py-3`}>
+              <div key={sec.label} className={`${sec.bg} rounded-xl px-4 py-3`}>
                 <div className={`text-xs font-semibold ${sec.color} mb-1.5 flex items-center gap-1`}>
                   <span>{sec.icon}</span>
                   <span>{sec.label}</span>
@@ -124,20 +141,20 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
               </div>
             ))}
           </div>
-          <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />
+          {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}
         </div>
       </div>
     );
   }
 
-  // Fallback: plain text
+  // No sections yet — plain text bubble (streaming preamble or non-structured response)
   return (
     <div className="flex justify-start mb-4">
       <div className="max-w-[85%]">
         <div className="rounded-2xl rounded-bl-md bg-white border border-gray-200 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm">
           {stripMarkdown(content)}
         </div>
-        <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />
+        {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}
       </div>
     </div>
   );
