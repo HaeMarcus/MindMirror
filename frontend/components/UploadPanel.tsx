@@ -14,9 +14,10 @@ interface UploadResult {
 interface UploadPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  nickname: string;
 }
 
-export default function UploadPanel({ isOpen, onClose }: UploadPanelProps) {
+export default function UploadPanel({ isOpen, onClose, nickname }: UploadPanelProps) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [results, setResults] = useState<UploadResult[]>([]);
@@ -34,7 +35,7 @@ export default function UploadPanel({ isOpen, onClose }: UploadPanelProps) {
     const newResults: UploadResult[] = [];
     for (const file of Array.from(files)) {
       try {
-        const res = await uploadFile(file, (p) => setProgress(p));
+        const res = await uploadFile(file, nickname, (p) => setProgress(p));
         newResults.push(res);
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "上传失败";

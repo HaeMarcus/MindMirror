@@ -5,6 +5,7 @@ import MessageBubble from "./MessageBubble";
 import QuickActions from "./QuickActions";
 import UploadPanel from "./UploadPanel";
 import DataPanel from "./DataPanel";
+import NicknamePrompt from "./NicknamePrompt";
 import { sendMessage, getMessages, resetAll, submitFeedback } from "@/lib/api";
 
 interface Message {
@@ -15,6 +16,8 @@ interface Message {
 }
 
 export default function ChatWindow() {
+  const [nickname, setNickname] = useState<string | null>(null);
+  const [showNicknamePrompt, setShowNicknamePrompt] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -23,16 +26,27 @@ export default function ChatWindow() {
   const [showData, setShowData] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Load history on mount
+  // Initialize nickname from localStorage
   useEffect(() => {
-    getMessages()
+    const stored = localStorage.getItem("mm_nickname");
+    if (stored) {
+      setNickname(stored);
+    } else {
+      setShowNicknamePrompt(true);
+    }
+  }, []);
+
+  // Load history when nickname is set
+  useEffect(() => {
+    if (!nickname) return;
+    getMessages(nickname)
       .then((msgs) => {
         if (msgs.length > 0) {
           setMessages(msgs.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })));
         }
       })
       .catch(() => {});
-  }, []);
+  }, [nickname]);
 
   // Auto-scroll
   useEffect(() => {
@@ -42,9 +56,14 @@ export default function ChatWindow() {
   // Buffer for streaming content (not displayed until done)
   const streamBuffer = useRef("");
 
+  const handleNicknameConfirm = (name: string) => {
+    setNickname(name);
+    setShowNicknamePrompt(false);
+  };
+
   const handleSend = async (text?: string) => {
     const msg = (text || input).trim();
-    if (!msg || isStreaming) return;
+    if (!msg || isStreaming || !nickname) return;
 
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: msg }]);
@@ -55,13 +74,12 @@ export default function ChatWindow() {
     try {
       await sendMessage(
         msg,
+        nickname,
         (chunk) => {
           streamBuffer.current += chunk;
-          // Update status to show generation progress
           setStatusText("回答生成中...");
         },
         (messageId) => {
-          // Streaming done — add the full message at once for instant color card render
           const fullContent = streamBuffer.current;
           setMessages((prev) => [
             ...prev,
@@ -98,13 +116,21 @@ export default function ChatWindow() {
   };
 
   const handleReset = async () => {
+    if (!nickname) return;
     if (!confirm("确定要清除所有数据吗？（对话历史、上传的文件、记忆都会被删除）")) return;
     try {
-      await resetAll();
+      await resetAll(nickname);
       setMessages([]);
     } catch {
       alert("清除失败，请稍后重试");
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("mm_nickname");
+    setNickname(null);
+    setMessages([]);
+    setShowNicknamePrompt(true);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -116,13 +142,22 @@ export default function ChatWindow() {
 
   return (
     <div className="flex flex-col h-screen max-w-2xl mx-auto">
+      {/* Nickname Prompt */}
+      {showNicknamePrompt && <NicknamePrompt onConfirm={handleNicknameConfirm} />}
+
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-white">
         <div>
           <h1 className="text-lg font-bold text-gray-800">MindMirror</h1>
-          <p className="text-xs text-gray-400">基于多源数据的 AI 觉察助手</p>
+          <p className="text-xs text-gray-400">基于多源数据的 AI 觉察助手{nickname && ` · ${nickname}`}</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 text-xs rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-100 transition-colors"
+          >
+            切换身份
+          </button>
           <button
             onClick={handleReset}
             className="px-3 py-1.5 text-xs rounded-lg border border-[#a8b5a0] text-[#7a8a72] hover:bg-[#f0f4ee] transition-colors"
@@ -209,8 +244,12 @@ export default function ChatWindow() {
       </div>
 
       {/* Panels */}
-      <UploadPanel isOpen={showUpload} onClose={() => setShowUpload(false)} />
-      <DataPanel isOpen={showData} onClose={() => setShowData(false)} />
+      {nickname && (
+        <>
+          <UploadPanel isOpen={showUpload} onClose={() => setShowUpload(false)} nickname={nickname} />
+          <DataPanel isOpen={showData} onClose={() => setShowData(false)} nickname={nickname} />
+        </>
+      )}
     </div>
   );
 }

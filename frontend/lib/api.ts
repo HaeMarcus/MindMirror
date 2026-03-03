@@ -1,5 +1,24 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "/api";
 
+// ---- User registration ----
+
+export async function registerNickname(nickname: string): Promise<{ status?: string; error?: string; exists?: boolean }> {
+  const res = await fetch(`${API_BASE}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nickname }),
+  });
+  return res.json();
+}
+
+export async function checkNickname(nickname: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE}/check-nickname?nickname=${encodeURIComponent(nickname)}`);
+  const data = await res.json();
+  return data.exists;
+}
+
+// ---- File upload ----
+
 export interface UploadProgress {
   stage: string;
   message: string;
@@ -9,10 +28,12 @@ export interface UploadProgress {
 
 export async function uploadFile(
   file: File,
+  nickname: string,
   onProgress?: (p: UploadProgress) => void,
 ) {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("nickname", nickname);
 
   const res = await fetch(`${API_BASE}/ingest`, {
     method: "POST",
@@ -59,8 +80,11 @@ export async function uploadFile(
   return result;
 }
 
+// ---- Chat ----
+
 export async function sendMessage(
   message: string,
+  nickname: string,
   onChunk: (text: string) => void,
   onDone: (messageId: number | null) => void,
   onStatus?: (status: string) => void,
@@ -68,7 +92,7 @@ export async function sendMessage(
   const res = await fetch(`${API_BASE}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, nickname }),
   });
 
   if (!res.ok) {
@@ -132,10 +156,12 @@ export async function submitFeedback(messageId: number, rating: "accurate" | "in
   });
 }
 
-export async function getMessages(): Promise<
+// ---- Messages & Documents ----
+
+export async function getMessages(nickname: string): Promise<
   { role: string; content: string; created_at: string }[]
 > {
-  const res = await fetch(`${API_BASE}/messages`);
+  const res = await fetch(`${API_BASE}/messages?nickname=${encodeURIComponent(nickname)}`);
   const data = await res.json();
   return data.messages || [];
 }
@@ -150,13 +176,13 @@ export interface DocumentInfo {
   created_at: string;
 }
 
-export async function getDocuments(): Promise<DocumentInfo[]> {
-  const res = await fetch(`${API_BASE}/documents`);
+export async function getDocuments(nickname: string): Promise<DocumentInfo[]> {
+  const res = await fetch(`${API_BASE}/documents?nickname=${encodeURIComponent(nickname)}`);
   const data = await res.json();
   return data.documents || [];
 }
 
-export async function resetAll(): Promise<void> {
-  const res = await fetch(`${API_BASE}/reset`, { method: "DELETE" });
+export async function resetAll(nickname: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/reset?nickname=${encodeURIComponent(nickname)}`, { method: "DELETE" });
   if (!res.ok) throw new Error("清除失败");
 }

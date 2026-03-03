@@ -6,6 +6,7 @@ import { getDocuments, DocumentInfo } from "@/lib/api";
 interface DataPanelProps {
   isOpen: boolean;
   onClose: () => void;
+  nickname: string;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -20,19 +21,19 @@ const SOURCE_ICONS: Record<string, string> = {
   ledger_csv: "💰",
 };
 
-export default function DataPanel({ isOpen, onClose }: DataPanelProps) {
+export default function DataPanel({ isOpen, onClose, nickname }: DataPanelProps) {
   const [documents, setDocuments] = useState<DocumentInfo[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setLoading(true);
-      getDocuments()
+      getDocuments(nickname)
         .then(setDocuments)
         .catch(() => setDocuments([]))
         .finally(() => setLoading(false));
     }
-  }, [isOpen]);
+  }, [isOpen, nickname]);
 
   if (!isOpen) return null;
 
