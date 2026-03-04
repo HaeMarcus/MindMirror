@@ -29,7 +29,9 @@
 
 MindMirror 不负责讨好，只负责照见。 它试图通过多维数据的关联，帮用户发现连自己都可能忽略的行为模式和认知盲区。MindMirror 尚在雏形，但欢迎大家前来“照镜子”，听听 AI 对你的“人间清醒”式告白。
 
-> 🌐 **直接试试：** [mind-mirror-liart.vercel.app](https://mind-mirror-liart.vercel.app/)&emsp;|&emsp;📄 **产品设计全文：** [PRD 产品需求文档](https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb)
+<p align="center">
+  🌐 <strong>直接试试：</strong> <a href="https://mind-mirror-liart.vercel.app/">mind-mirror-liart.vercel.app</a>&emsp;|&emsp;📄 <strong>产品需求文档：</strong> <a href="https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb">PRD 产品需求文档</a>
+</p>
 
 
 ## ✨ 功能亮点
