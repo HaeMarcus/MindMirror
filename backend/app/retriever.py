@@ -18,8 +18,8 @@ def retrieve(query: str, user_id: str, top_k: int = FAISS_TOP_K) -> dict:
     # 1. Encode query
     query_vec = encode([query])
 
-    # 2. FAISS search (global index)
-    raw_results = search(query_vec, top_k=top_k)
+    # 2. FAISS search (per-user index)
+    raw_results = search(query_vec, user_id=user_id, top_k=top_k)
     if not raw_results:
         return {"sources": [], "raw_chunks": []}
 

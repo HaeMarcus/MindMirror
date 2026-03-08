@@ -78,7 +78,7 @@ def _split_by_headings(content: str) -> list[dict]:
         })
 
     # If no headings found, split by paragraphs
-    if len(sections) <= 1 and len(content) > 1200:
+    if len(sections) <= 1 and len(content) > 500:
         return _split_by_paragraphs(content)
 
     return sections
@@ -89,7 +89,7 @@ def _split_by_paragraphs(content: str) -> list[dict]:
     sections = []
     current = ""
     for p in paragraphs:
-        if len(current) + len(p) > 1200 and current:
+        if len(current) + len(p) > 500 and current:
             sections.append({"heading": "", "text": current.strip()})
             current = p
         else:
@@ -131,7 +131,8 @@ def _infer_time_range(content: str, source_name: str) -> dict:
     return {"value": None, "confidence": None}
 
 
-def _split_if_long(text: str, max_len: int = 1200) -> list[str]:
+def _split_if_long(text: str, max_len: int = 500) -> list[str]:
+    """Split text that exceeds embedding model's effective window (~512 tokens ≈ 300-400 Chinese chars)."""
     if len(text) <= max_len:
         return [text]
     paragraphs = text.split("\n")

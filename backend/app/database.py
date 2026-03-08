@@ -252,7 +252,9 @@ def get_feedback_stats() -> dict:
 
 
 def clear_all_data(user_id: str):
-    """Clear all data for a specific user."""
+    """Clear all data for a specific user, including their FAISS index."""
+    from app.embedding import delete_user_index
+
     with get_db() as db:
         # Get user's doc_ids to delete their chunks
         doc_ids = [r["doc_id"] for r in db.execute("SELECT doc_id FROM documents WHERE user_id = ?", (user_id,)).fetchall()]
@@ -262,5 +264,7 @@ def clear_all_data(user_id: str):
         db.execute("DELETE FROM documents WHERE user_id = ?", (user_id,))
         db.execute("DELETE FROM messages WHERE user_id = ?", (user_id,))
         db.execute("DELETE FROM memory WHERE user_id = ?", (user_id,))
-        # Delete feedback for this user's messages (already deleted, but clean up by message_id)
         db.execute("DELETE FROM feedback WHERE message_id NOT IN (SELECT id FROM messages)")
+
+    # Clean up user's FAISS index (outside DB transaction)
+    delete_user_index(user_id)

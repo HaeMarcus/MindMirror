@@ -40,33 +40,43 @@ async def ingest_file(file: UploadFile = File(...), nickname: str = Form(...)):
         raise HTTPException(status_code=400, detail="文件解析后无有效内容")
 
     def generate():
-        total = len(chunks)
-        yield f"data: {json.dumps({'type': 'progress', 'stage': 'parse', 'message': f'解析完成，共 {total} 个片段', 'current': 0, 'total': total})}\n\n"
+        import numpy as np
+
+        # Separate chunks: only embed summaries, not individual ledger rows
+        chunks_to_embed = [c for c in chunks if c["chunk_type"] != "ledger_row"]
+        chunks_no_embed = [c for c in chunks if c["chunk_type"] == "ledger_row"]
+
+        embed_total = len(chunks_to_embed)
+        store_total = len(chunks)
+
+        yield f"data: {json.dumps({'type': 'progress', 'stage': 'parse', 'message': f'解析完成，共 {store_total} 条数据，{embed_total} 条将进行语义索引', 'current': 0, 'total': embed_total})}\n\n"
 
         # Remove old data if re-uploading same doc
         delete_document(doc["doc_id"])
 
-        # Generate embeddings in batches with progress
-        import numpy as np
-        texts = [c["content"] for c in chunks]
-        all_embeddings = []
-        for i in range(0, total, BATCH_SIZE):
-            batch = texts[i:i + BATCH_SIZE]
-            emb = encode_batch(batch)
-            all_embeddings.append(emb)
-            done = min(i + BATCH_SIZE, total)
-            yield f"data: {json.dumps({'type': 'progress', 'stage': 'embed', 'message': '数据向量化处理中', 'current': done, 'total': total})}\n\n"
+        # Embed only the embeddable chunks in batches with progress
+        if chunks_to_embed:
+            texts = [c["content"] for c in chunks_to_embed]
+            all_embeddings = []
+            for i in range(0, embed_total, BATCH_SIZE):
+                batch = texts[i:i + BATCH_SIZE]
+                emb = encode_batch(batch)
+                all_embeddings.append(emb)
+                done = min(i + BATCH_SIZE, embed_total)
+                yield f"data: {json.dumps({'type': 'progress', 'stage': 'embed', 'message': '数据向量化处理中', 'current': done, 'total': embed_total})}\n\n"
 
-        embeddings = np.vstack(all_embeddings)
-        faiss_ids = add_vectors(embeddings)
+            embeddings = np.vstack(all_embeddings)
+            faiss_ids = add_vectors(embeddings, user_id=user_id)
 
-        for chunk, fid in zip(chunks, faiss_ids):
-            chunk["faiss_id"] = fid
+            for chunk, fid in zip(chunks_to_embed, faiss_ids):
+                chunk["faiss_id"] = fid
+
+        # Non-embedded chunks keep faiss_id=None (already the default)
 
         insert_document(**doc, user_id=user_id)
         insert_chunks(chunks)
 
-        yield f"data: {json.dumps({'type': 'done', 'doc_id': doc['doc_id'], 'source_type': doc['source_type'], 'source_name': doc['source_name'], 'chunk_count': total, 'time_range_start': doc.get('time_range_start'), 'time_range_end': doc.get('time_range_end')})}\n\n"
+        yield f"data: {json.dumps({'type': 'done', 'doc_id': doc['doc_id'], 'source_type': doc['source_type'], 'source_name': doc['source_name'], 'chunk_count': store_total, 'embedded_count': embed_total, 'time_range_start': doc.get('time_range_start'), 'time_range_end': doc.get('time_range_end')})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 

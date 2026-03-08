@@ -7,7 +7,8 @@ from pydantic import BaseModel
 from app.retriever import retrieve
 from app.memory import (
     get_short_memory, get_rolling_summary, get_user_profile,
-    should_update_summary, save_rolling_summary, save_user_profile,
+    should_update_summary, mark_summary_updated, save_rolling_summary,
+    should_update_profile, mark_profile_updated, save_user_profile,
 )
 from app.database import (
     add_message, get_recent_messages, clear_all_data,
@@ -88,17 +89,20 @@ async def chat(req: ChatRequest):
         # Signal end with message_id
         yield f"event: done\ndata: {json.dumps({'message_id': msg_id})}\n\n"
 
-        # 6. Trigger memory updates if needed
+        # 6. Trigger memory updates (counter-based, independent triggers)
         if should_update_summary(user_id=user_id):
             recent = get_recent_messages(limit=20, user_id=user_id)
             old_summary = get_rolling_summary(user_id=user_id)
             new_summary = generate_rolling_summary(recent, old_summary)
             save_rolling_summary(new_summary, user_id=user_id)
+            mark_summary_updated(user_id=user_id)
 
-            msg_count = len(get_recent_messages(limit=1000, user_id=user_id))
-            if msg_count > 0 and (msg_count // 2) % (7 * 3) == 0:
-                new_profile = update_user_profile(get_user_profile(user_id=user_id), new_summary)
+        if should_update_profile(user_id=user_id):
+            summary = get_rolling_summary(user_id=user_id)
+            if summary:
+                new_profile = update_user_profile(get_user_profile(user_id=user_id), summary)
                 save_user_profile(new_profile, user_id=user_id)
+            mark_profile_updated(user_id=user_id)
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 

@@ -27,7 +27,7 @@ def parse_flomo_html(content: str, source_name: str) -> dict:
         tags = re.findall(r"#(\S+)", text)
 
         # Split long memos
-        text_chunks = _split_if_long(text, max_len=1200, min_len=600)
+        text_chunks = _split_if_long(text, max_len=500, min_len=200)
 
         for j, chunk_text in enumerate(text_chunks):
             chunk_id = f"{doc_id}_memo_{i}_{j}"
@@ -59,7 +59,8 @@ def parse_flomo_html(content: str, source_name: str) -> dict:
     return {"document": document, "chunks": chunks}
 
 
-def _split_if_long(text: str, max_len: int = 1200, min_len: int = 600) -> list[str]:
+def _split_if_long(text: str, max_len: int = 500, min_len: int = 200) -> list[str]:
+    """Split text that exceeds embedding model's effective window (~512 tokens ≈ 300-400 Chinese chars)."""
     if len(text) <= max_len:
         return [text]
     paragraphs = text.split("\n")
