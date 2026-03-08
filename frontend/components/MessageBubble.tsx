@@ -3,6 +3,7 @@
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
+  nickname?: string;
   isStreaming?: boolean;
   feedbackGiven?: "accurate" | "inaccurate" | null;
   onFeedback?: (rating: "accurate" | "inaccurate") => void;
@@ -59,6 +60,22 @@ function parseInsightSections(content: string) {
   return { sections, preamble };
 }
 
+function AssistantAvatar() {
+  return (
+    <div className="w-7 h-7 rounded-full bg-[#8a9a7e] flex items-center justify-center text-white text-xs flex-shrink-0 mt-0.5">
+      🪞
+    </div>
+  );
+}
+
+function UserAvatar({ nickname }: { nickname: string }) {
+  return (
+    <div className="w-7 h-7 rounded-full bg-[#6b8cce] flex items-center justify-center text-white text-xs font-medium flex-shrink-0 mt-0.5">
+      {nickname ? nickname.charAt(0).toUpperCase() : "U"}
+    </div>
+  );
+}
+
 function FeedbackButtons({
   feedbackGiven,
   onFeedback,
@@ -69,7 +86,7 @@ function FeedbackButtons({
   if (!onFeedback) return null;
 
   return (
-    <div className="flex gap-2 mt-2 justify-center">
+    <div className="flex gap-2 mt-2 ml-9.5">
       <button
         onClick={() => onFeedback("accurate")}
         disabled={!!feedbackGiven}
@@ -102,13 +119,14 @@ function FeedbackButtons({
   );
 }
 
-export default function MessageBubble({ role, content, isStreaming, feedbackGiven, onFeedback }: MessageBubbleProps) {
+export default function MessageBubble({ role, content, nickname = "", isStreaming, feedbackGiven, onFeedback }: MessageBubbleProps) {
   if (role === "user") {
     return (
-      <div className="flex justify-end mb-4">
-        <div className="max-w-[75%] lg:max-w-[65%] rounded-2xl rounded-br-md bg-[#8a9a7e] text-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm">
+      <div className="flex justify-end mb-4 items-start gap-2.5">
+        <div className="max-w-[70%] lg:max-w-[60%] rounded-2xl rounded-br-md bg-[#8a9a7e] text-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm">
           {content}
         </div>
+        <UserAvatar nickname={nickname} />
       </div>
     );
   }
@@ -117,40 +135,46 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
 
   if (sections.length >= 1) {
     return (
-      <div className="flex justify-start mb-4">
-        <div className="max-w-[85%] lg:max-w-[78%]">
-          {preamble && (
-            <div className="rounded-2xl rounded-bl-md bg-white/80 backdrop-blur-sm border border-gray-200/60 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm mb-3">
-              {stripMarkdown(preamble)}
-            </div>
-          )}
-          <div className="space-y-2.5 animate-card-stagger">
-            {sections.map((sec) => (
-              <div key={sec.label} className={`${sec.bg} backdrop-blur-sm ${sec.border} border rounded-xl px-4 py-3 shadow-sm animate-fade-in`}>
-                <div className={`text-xs font-semibold ${sec.color} mb-1.5 flex items-center gap-1`}>
-                  <span>{sec.icon}</span>
-                  <span>{sec.label}</span>
-                </div>
-                <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-                  {stripMarkdown(sec.content)}
-                </div>
+      <div className="mb-4">
+        <div className="flex justify-start items-start gap-2.5">
+          <AssistantAvatar />
+          <div className="max-w-[80%] lg:max-w-[73%]">
+            {preamble && (
+              <div className="rounded-2xl rounded-bl-md bg-white/80 backdrop-blur-sm border border-gray-200/60 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm mb-3">
+                {stripMarkdown(preamble)}
               </div>
-            ))}
+            )}
+            <div className="space-y-2.5 animate-card-stagger">
+              {sections.map((sec) => (
+                <div key={sec.label} className={`${sec.bg} backdrop-blur-sm ${sec.border} border rounded-xl px-4 py-3 shadow-sm animate-fade-in`}>
+                  <div className={`text-xs font-semibold ${sec.color} mb-1.5 flex items-center gap-1`}>
+                    <span>{sec.icon}</span>
+                    <span>{sec.label}</span>
+                  </div>
+                  <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+                    {stripMarkdown(sec.content)}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}
         </div>
+        {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}
       </div>
     );
   }
 
   return (
-    <div className="flex justify-start mb-4">
-      <div className="max-w-[85%]">
-        <div className="rounded-2xl rounded-bl-md bg-white/80 backdrop-blur-sm border border-gray-200/60 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm">
-          {stripMarkdown(content)}
+    <div className="mb-4">
+      <div className="flex justify-start items-start gap-2.5">
+        <AssistantAvatar />
+        <div className="max-w-[80%]">
+          <div className="rounded-2xl rounded-bl-md bg-white/80 backdrop-blur-sm border border-gray-200/60 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm">
+            {stripMarkdown(content)}
+          </div>
         </div>
-        {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}
       </div>
+      {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}
     </div>
   );
 }

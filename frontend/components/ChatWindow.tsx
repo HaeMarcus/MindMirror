@@ -43,6 +43,12 @@ const EMPTY_STATE_CARDS = [
   },
 ];
 
+const QUICK_ACTIONS = [
+  { label: "大五人格与MBTI", icon: "👤", prompt: "请基于我各维度数据，从大五人格（开放性、尽责性、外向性、宜人性、神经质）的角度分析我的人格特征。并推断我的 MBTI 类型。" },
+  { label: "言行一致性洞察", icon: "🔍", prompt: "请基于我各维度数据，归纳我言语与行为的不一致之处。" },
+  { label: "消费观念洞察", icon: "💰", prompt: "请基于我各维度数据，分析我的消费习惯和消费观念。" },
+];
+
 export default function ChatWindow() {
   const [nickname, setNickname] = useState<string | null>(null);
   const [showNicknamePrompt, setShowNicknamePrompt] = useState(false);
@@ -188,8 +194,6 @@ export default function ChatWindow() {
           onOpenUpload={() => setShowUpload(true)}
           onOpenData={() => setShowData(true)}
           onReset={handleReset}
-          onQuickAction={handleSend}
-          disabled={isStreaming}
         />
       )}
 
@@ -261,6 +265,7 @@ export default function ChatWindow() {
                   <MessageBubble
                     role={msg.role}
                     content={msg.content}
+                    nickname={nickname || ""}
                     feedbackGiven={msg.feedbackGiven}
                     onFeedback={msg.role === "assistant" && msg.messageId ? (rating) => handleFeedback(i, rating) : undefined}
                   />
@@ -269,9 +274,12 @@ export default function ChatWindow() {
               {isStreaming && (
                 <div className="animate-msg-in">
                   {streamingContent ? (
-                    <MessageBubble role="assistant" content={streamingContent} isStreaming />
+                    <MessageBubble role="assistant" content={streamingContent} nickname={nickname || ""} isStreaming />
                   ) : (
-                    <div className="flex justify-start mb-4">
+                    <div className="flex justify-start mb-4 items-start gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-[#8a9a7e] flex items-center justify-center text-white text-xs flex-shrink-0 mt-0.5">
+                        🪞
+                      </div>
                       <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl px-4 py-3 shadow-sm">
                         <div className="flex items-center gap-2">
                           <div className="flex gap-1">
@@ -292,9 +300,24 @@ export default function ChatWindow() {
           )}
         </div>
 
-        {/* Input area */}
+        {/* Quick actions + Input area */}
         <div className="flex-shrink-0 px-4 md:px-8 pb-4 pt-2">
           <div className="max-w-3xl mx-auto">
+            {/* Quick action buttons */}
+            <div className="flex gap-2 justify-start flex-wrap mb-2">
+              {QUICK_ACTIONS.map((action) => (
+                <button
+                  key={action.label}
+                  onClick={() => handleSend(action.prompt)}
+                  disabled={isStreaming}
+                  className="px-3 py-1.5 text-xs rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 text-gray-500 hover:bg-white hover:border-[#8a9a7e]/40 hover:text-[#6a7a5e] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <span className="mr-1">{action.icon}</span>
+                  {action.label}
+                </button>
+              ))}
+            </div>
+
             <div className="relative flex items-end bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-sm focus-within:shadow-md focus-within:border-[#8a9a7e]/40 transition-all duration-200">
               {/* Upload button inside input */}
               <button

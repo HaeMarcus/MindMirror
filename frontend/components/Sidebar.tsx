@@ -7,27 +7,7 @@ interface SidebarProps {
   onOpenUpload: () => void;
   onOpenData: () => void;
   onReset: () => void;
-  onQuickAction: (prompt: string) => void;
-  disabled: boolean;
 }
-
-const QUICK_ACTIONS = [
-  {
-    label: "大五人格与MBTI",
-    icon: "👤",
-    prompt: "请基于我各维度数据，从大五人格（开放性、尽责性、外向性、宜人性、神经质）的角度分析我的人格特征。并推断我的 MBTI 类型。",
-  },
-  {
-    label: "言行一致性洞察",
-    icon: "🔍",
-    prompt: "请基于我各维度数据，归纳我言语与行为的不一致之处。",
-  },
-  {
-    label: "消费观念洞察",
-    icon: "💰",
-    prompt: "请基于我各维度数据，分析我的消费习惯和消费观念。",
-  },
-];
 
 export default function Sidebar({
   isOpen,
@@ -36,8 +16,6 @@ export default function Sidebar({
   onOpenUpload,
   onOpenData,
   onReset,
-  onQuickAction,
-  disabled,
 }: SidebarProps) {
   return (
     <>
@@ -62,11 +40,11 @@ export default function Sidebar({
         `}
       >
         <div className="flex flex-col h-full w-60 min-w-[15rem]">
-          {/* Sidebar header */}
-          <div className="flex items-center justify-between px-4 pt-4 pb-3">
+          {/* Sidebar header — logo + collapse button */}
+          <div className="flex items-center justify-between px-4 pt-5 pb-1">
             <div className="flex items-center gap-2">
-              <span className="text-lg">🪞</span>
-              <span className="font-semibold text-gray-700 text-sm">MindMirror</span>
+              <span className="text-xl">🪞</span>
+              <span className="font-bold text-gray-800 text-base">MindMirror</span>
             </div>
             <button
               onClick={onToggle}
@@ -82,17 +60,17 @@ export default function Sidebar({
           </div>
 
           {/* User section */}
-          <div className="px-4 pb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-[#8a9a7e] flex items-center justify-center text-white text-xs font-medium">
+          <div className="px-4 pt-4 pb-6">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-[#8a9a7e] flex items-center justify-center text-white text-xs font-medium">
                 {nickname.charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm text-gray-600 truncate">{nickname}</span>
+              <span className="text-sm text-gray-500 truncate">{nickname}</span>
             </div>
           </div>
 
           {/* Data management section */}
-          <div className="px-3 pt-4 pb-2">
+          <div className="px-3 pb-2">
             <p className="text-[10px] uppercase tracking-wider text-gray-400 font-medium px-1 mb-2">
               数据管理
             </p>
@@ -132,23 +110,15 @@ export default function Sidebar({
             </div>
           </div>
 
-          {/* Quick insights section */}
-          <div className="px-3 pt-4 pb-3 flex-1 overflow-y-auto">
-            <p className="text-[10px] uppercase tracking-wider text-gray-400 font-medium px-1 mb-2">
-              快捷洞察
-            </p>
-            <div className="space-y-1">
-              {QUICK_ACTIONS.map((action) => (
-                <button
-                  key={action.label}
-                  onClick={() => onQuickAction(action.prompt)}
-                  disabled={disabled}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-600 rounded-lg hover:bg-[#d4ddd0]/50 hover:translate-x-0.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:translate-x-0 text-left"
-                >
-                  <span className="text-base flex-shrink-0">{action.icon}</span>
-                  <span className="leading-tight">{action.label}</span>
-                </button>
-              ))}
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Feedback guidance */}
+          <div className="px-4 py-4">
+            <div className="rounded-xl bg-white/50 backdrop-blur-sm px-3.5 py-3">
+              <p className="text-xs text-gray-500 leading-relaxed">
+                每次对话后，欢迎点击 👍👎 反馈洞察是否准确，帮助我们持续改进。感谢你的支持！
+              </p>
             </div>
           </div>
         </div>
