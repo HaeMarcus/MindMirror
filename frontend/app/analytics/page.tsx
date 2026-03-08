@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import { getAnalytics, type AnalyticsData } from "@/lib/api";
-import AnalyticsDashboard from "@/components/AnalyticsDashboard";
+
+const AnalyticsDashboard = dynamic(() => import("@/components/AnalyticsDashboard"), { ssr: false });
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
