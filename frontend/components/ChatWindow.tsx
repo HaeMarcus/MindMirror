@@ -211,10 +211,7 @@ export default function ChatWindow() {
             </button>
           )}
           <h1 className="text-sm font-semibold text-gray-700">MindMirror</h1>
-          <span className="text-xs text-gray-400 ml-2">AI 觉察助手</span>
-          {nickname && (
-            <span className="ml-auto text-xs text-gray-400">{nickname}</span>
-          )}
+          <span className="text-xs text-gray-400 ml-2">基于多维数据的 AI 自我觉察助手</span>
         </header>
 
         {/* Messages area */}
@@ -333,7 +330,7 @@ export default function ChatWindow() {
                 </svg>
               </button>
             </div>
-            <p className="text-center text-[10px] text-gray-400 mt-2">隐私持续守护中 · 原始数据不上传</p>
+            <p className="text-center text-xs text-gray-400 font-medium mt-2">隐私持续守护中 🔒</p>
           </div>
         </div>
       </main>

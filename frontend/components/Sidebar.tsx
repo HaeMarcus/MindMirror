@@ -63,7 +63,7 @@ export default function Sidebar({
       >
         <div className="flex flex-col h-full w-60 min-w-[15rem]">
           {/* Sidebar header */}
-          <div className="flex items-center justify-between px-4 py-4 border-b border-[#d4ddd0]/60">
+          <div className="flex items-center justify-between px-4 pt-4 pb-3">
             <div className="flex items-center gap-2">
               <span className="text-lg">🪞</span>
               <span className="font-semibold text-gray-700 text-sm">MindMirror</span>
@@ -82,7 +82,7 @@ export default function Sidebar({
           </div>
 
           {/* User section */}
-          <div className="px-4 py-3 border-b border-[#d4ddd0]/60">
+          <div className="px-4 pb-4">
             <div className="flex items-center gap-2">
               <div className="w-7 h-7 rounded-full bg-[#8a9a7e] flex items-center justify-center text-white text-xs font-medium">
                 {nickname.charAt(0).toUpperCase()}
@@ -92,7 +92,7 @@ export default function Sidebar({
           </div>
 
           {/* Data management section */}
-          <div className="px-3 py-3 border-b border-[#d4ddd0]/60">
+          <div className="px-3 pt-4 pb-2">
             <p className="text-[10px] uppercase tracking-wider text-gray-400 font-medium px-1 mb-2">
               数据管理
             </p>
@@ -106,7 +106,7 @@ export default function Sidebar({
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                导入数据
+                导入新数据
               </button>
               <button
                 onClick={onOpenData}
@@ -133,7 +133,7 @@ export default function Sidebar({
           </div>
 
           {/* Quick insights section */}
-          <div className="px-3 py-3 flex-1 overflow-y-auto">
+          <div className="px-3 pt-4 pb-3 flex-1 overflow-y-auto">
             <p className="text-[10px] uppercase tracking-wider text-gray-400 font-medium px-1 mb-2">
               快捷洞察
             </p>
@@ -150,13 +150,6 @@ export default function Sidebar({
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Footer */}
-          <div className="px-4 py-3 border-t border-[#d4ddd0]/60">
-            <p className="text-[10px] text-gray-400 text-center">
-              隐私持续守护中 · 原始数据不上传
-            </p>
           </div>
         </div>
       </aside>
