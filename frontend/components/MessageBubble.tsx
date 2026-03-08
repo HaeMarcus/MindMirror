@@ -9,9 +9,9 @@ interface MessageBubbleProps {
 }
 
 const SECTION_LABELS = [
-  { key: "核心洞察", color: "text-rose-600", bg: "bg-rose-50", icon: "◆" },
-  { key: "模式识别", color: "text-violet-600", bg: "bg-violet-50", icon: "◇" },
-  { key: "证据归因", color: "text-blue-600", bg: "bg-blue-50", icon: "△" },
+  { key: "核心洞察", color: "text-rose-600", bg: "bg-rose-50/80", border: "border-rose-100", icon: "◆" },
+  { key: "模式识别", color: "text-violet-600", bg: "bg-violet-50/80", border: "border-violet-100", icon: "◇" },
+  { key: "证据归因", color: "text-blue-600", bg: "bg-blue-50/80", border: "border-blue-100", icon: "△" },
 ];
 
 function stripMarkdown(text: string): string {
@@ -23,10 +23,9 @@ function stripMarkdown(text: string): string {
 }
 
 function parseInsightSections(content: string) {
-  const sections: { label: string; content: string; color: string; bg: string; icon: string }[] = [];
+  const sections: { label: string; content: string; color: string; bg: string; border: string; icon: string }[] = [];
   let preamble = "";
 
-  // Find the first section marker to extract preamble
   let firstMarkerIdx = -1;
   for (const sec of SECTION_LABELS) {
     const idx = content.indexOf(`【${sec.key}】`);
@@ -43,7 +42,6 @@ function parseInsightSections(content: string) {
     const idx = content.indexOf(marker);
     if (idx === -1) continue;
 
-    // Find end: either next 【 or end of string
     const afterMarker = content.slice(idx + marker.length);
     const nextIdx = afterMarker.search(/【[^【】]+】/);
     const sectionContent = nextIdx >= 0 ? afterMarker.slice(0, nextIdx) : afterMarker;
@@ -53,6 +51,7 @@ function parseInsightSections(content: string) {
       content: sectionContent.trim(),
       color: sec.color,
       bg: sec.bg,
+      border: sec.border,
       icon: sec.icon,
     });
   }
@@ -74,12 +73,12 @@ function FeedbackButtons({
       <button
         onClick={() => onFeedback("accurate")}
         disabled={!!feedbackGiven}
-        className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-full transition-colors ${
+        className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-full transition-all duration-200 ${
           feedbackGiven === "accurate"
-            ? "bg-green-100 text-green-700"
+            ? "bg-green-100 text-green-700 scale-105"
             : feedbackGiven
-              ? "opacity-40 text-gray-400 cursor-not-allowed"
-              : "text-gray-400 hover:bg-green-50 hover:text-green-600"
+              ? "opacity-30 text-gray-400 cursor-not-allowed"
+              : "text-gray-400 hover:bg-green-50 hover:text-green-600 hover:scale-105"
         }`}
       >
         <span>👍</span>
@@ -88,12 +87,12 @@ function FeedbackButtons({
       <button
         onClick={() => onFeedback("inaccurate")}
         disabled={!!feedbackGiven}
-        className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-full transition-colors ${
+        className={`flex items-center gap-1 px-2.5 py-1 text-xs rounded-full transition-all duration-200 ${
           feedbackGiven === "inaccurate"
-            ? "bg-red-100 text-red-700"
+            ? "bg-red-100 text-red-700 scale-105"
             : feedbackGiven
-              ? "opacity-40 text-gray-400 cursor-not-allowed"
-              : "text-gray-400 hover:bg-red-50 hover:text-red-600"
+              ? "opacity-30 text-gray-400 cursor-not-allowed"
+              : "text-gray-400 hover:bg-red-50 hover:text-red-600 hover:scale-105"
         }`}
       >
         <span>👎</span>
@@ -107,29 +106,27 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
   if (role === "user") {
     return (
       <div className="flex justify-end mb-4">
-        <div className="max-w-[75%] lg:max-w-[60%] rounded-2xl rounded-br-md bg-[#8a9a7e] text-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap">
+        <div className="max-w-[75%] lg:max-w-[65%] rounded-2xl rounded-br-md bg-[#8a9a7e] text-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm">
           {content}
         </div>
       </div>
     );
   }
 
-  // Always parse sections — works for both streaming and completed messages
-  // During streaming, cards appear progressively as section markers arrive
   const { sections, preamble } = parseInsightSections(content);
 
   if (sections.length >= 1) {
     return (
       <div className="flex justify-start mb-4">
-        <div className="max-w-[85%] lg:max-w-[75%]">
+        <div className="max-w-[85%] lg:max-w-[78%]">
           {preamble && (
-            <div className="rounded-2xl rounded-bl-md bg-white border border-gray-200 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm mb-3">
+            <div className="rounded-2xl rounded-bl-md bg-white/80 backdrop-blur-sm border border-gray-200/60 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm mb-3">
               {stripMarkdown(preamble)}
             </div>
           )}
-          <div className="space-y-3">
-            {sections.map((sec, i) => (
-              <div key={sec.label} className={`${sec.bg} rounded-xl px-4 py-3`}>
+          <div className="space-y-2.5 animate-card-stagger">
+            {sections.map((sec) => (
+              <div key={sec.label} className={`${sec.bg} backdrop-blur-sm ${sec.border} border rounded-xl px-4 py-3 shadow-sm animate-fade-in`}>
                 <div className={`text-xs font-semibold ${sec.color} mb-1.5 flex items-center gap-1`}>
                   <span>{sec.icon}</span>
                   <span>{sec.label}</span>
@@ -146,11 +143,10 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
     );
   }
 
-  // No sections yet — plain text bubble (streaming preamble or non-structured response)
   return (
     <div className="flex justify-start mb-4">
       <div className="max-w-[85%]">
-        <div className="rounded-2xl rounded-bl-md bg-white border border-gray-200 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm">
+        <div className="rounded-2xl rounded-bl-md bg-white/80 backdrop-blur-sm border border-gray-200/60 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm">
           {stripMarkdown(content)}
         </div>
         {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}

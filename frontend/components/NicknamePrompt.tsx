@@ -45,11 +45,11 @@ export default function NicknamePrompt({ onConfirm }: NicknamePromptProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl w-full max-w-sm mx-4 p-6 shadow-2xl text-center">
-        <div className="text-5xl mb-4">🪞</div>
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="bg-white/90 backdrop-blur-md rounded-2xl w-full max-w-sm mx-4 p-8 shadow-2xl text-center animate-fade-in">
+        <div className="text-5xl mb-4 animate-float">🪞</div>
         <h2 className="text-lg font-semibold text-gray-800 mb-1">你好，我是 MindMirror</h2>
-        <p className="text-sm text-gray-400 mb-5">该怎么称呼你？</p>
+        <p className="text-sm text-gray-400 mb-6">该怎么称呼你？</p>
 
         <input
           type="text"
@@ -58,7 +58,7 @@ export default function NicknamePrompt({ onConfirm }: NicknamePromptProps) {
           onKeyDown={handleKeyDown}
           placeholder="输入你的昵称"
           autoFocus
-          className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm text-center focus:outline-none focus:border-[#8a9a7e] transition-colors"
+          className="w-full rounded-xl border border-gray-200 bg-white/80 px-4 py-2.5 text-sm text-center focus:outline-none focus:border-[#8a9a7e] focus:shadow-sm transition-all duration-200"
           disabled={loading}
         />
 
@@ -67,7 +67,7 @@ export default function NicknamePrompt({ onConfirm }: NicknamePromptProps) {
         <button
           onClick={handleSubmit}
           disabled={loading || !value.trim()}
-          className="w-full mt-4 px-4 py-2.5 rounded-xl bg-[#8a9a7e] text-white text-sm font-medium hover:bg-[#7a8a6e] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="w-full mt-4 px-4 py-2.5 rounded-xl bg-[#8a9a7e] text-white text-sm font-medium hover:bg-[#7a8a6e] disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
         >
           {loading ? "确认中..." : "开始探索"}
         </button>
