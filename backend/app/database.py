@@ -50,7 +50,10 @@ CREATE TABLE IF NOT EXISTS memory (
 CREATE TABLE IF NOT EXISTS feedback (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     message_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL DEFAULT '',
     rating TEXT NOT NULL,
+    app_version TEXT NOT NULL DEFAULT '',
+    source_types TEXT NOT NULL DEFAULT '',
     created_at TEXT DEFAULT (datetime('now'))
 );
 """
@@ -60,6 +63,7 @@ def init_db():
     with get_db() as db:
         db.executescript(SCHEMA)
         _migrate_add_user_id(db)
+        _migrate_feedback_columns(db)
 
 
 def _migrate_add_user_id(db):
@@ -89,6 +93,17 @@ def _migrate_add_user_id(db):
         """)
         db.execute("INSERT INTO memory (user_id, key, value, updated_at) SELECT 'default', key, value, updated_at FROM memory_old")
         db.execute("DROP TABLE memory_old")
+
+
+def _migrate_feedback_columns(db):
+    """Add user_id, app_version, source_types columns to feedback if missing."""
+    cols = [r["name"] for r in db.execute("PRAGMA table_info(feedback)").fetchall()]
+    if "user_id" not in cols:
+        db.execute("ALTER TABLE feedback ADD COLUMN user_id TEXT NOT NULL DEFAULT ''")
+    if "app_version" not in cols:
+        db.execute("ALTER TABLE feedback ADD COLUMN app_version TEXT NOT NULL DEFAULT ''")
+    if "source_types" not in cols:
+        db.execute("ALTER TABLE feedback ADD COLUMN source_types TEXT NOT NULL DEFAULT ''")
 
 
 @contextmanager
@@ -240,15 +255,99 @@ def set_memory(key: str, value: str, user_id: str):
         )
 
 
-def add_feedback(message_id: int, rating: str):
+def add_feedback(message_id: int, rating: str, user_id: str = "",
+                 app_version: str = "", source_types: str = ""):
     with get_db() as db:
-        db.execute("INSERT INTO feedback (message_id, rating) VALUES (?, ?)", (message_id, rating))
+        db.execute(
+            "INSERT INTO feedback (message_id, rating, user_id, app_version, source_types) VALUES (?, ?, ?, ?, ?)",
+            (message_id, rating, user_id, app_version, source_types),
+        )
 
 
 def get_feedback_stats() -> dict:
     with get_db() as db:
         rows = db.execute("SELECT rating, COUNT(*) as cnt FROM feedback GROUP BY rating").fetchall()
         return {r["rating"]: r["cnt"] for r in rows}
+
+
+def get_feedback_analytics(days: int = 30) -> dict:
+    """Rich analytics for the developer dashboard."""
+    with get_db() as db:
+        # Overall stats
+        total_row = db.execute("SELECT COUNT(*) as total FROM feedback").fetchone()
+        total = total_row["total"]
+        accurate_row = db.execute("SELECT COUNT(*) as cnt FROM feedback WHERE rating = 'accurate'").fetchone()
+        accurate = accurate_row["cnt"]
+        rate = round(accurate / total * 100, 1) if total > 0 else 0
+
+        # Daily trend (last N days)
+        daily = db.execute(
+            """SELECT date(created_at) as day, rating, COUNT(*) as cnt
+               FROM feedback
+               WHERE created_at >= datetime('now', ?)
+               GROUP BY day, rating
+               ORDER BY day""",
+            (f"-{days} days",)
+        ).fetchall()
+
+        daily_map: dict[str, dict] = {}
+        for r in daily:
+            d = r["day"]
+            if d not in daily_map:
+                daily_map[d] = {"date": d, "accurate": 0, "inaccurate": 0}
+            daily_map[d][r["rating"]] = r["cnt"]
+        trend = list(daily_map.values())
+
+        # Per-version breakdown
+        versions = db.execute(
+            """SELECT app_version, rating, COUNT(*) as cnt
+               FROM feedback
+               WHERE app_version != ''
+               GROUP BY app_version, rating
+               ORDER BY app_version"""
+        ).fetchall()
+
+        version_map: dict[str, dict] = {}
+        for r in versions:
+            v = r["app_version"]
+            if v not in version_map:
+                version_map[v] = {"version": v, "accurate": 0, "inaccurate": 0}
+            version_map[v][r["rating"]] = r["cnt"]
+        by_version = list(version_map.values())
+
+        # Per-user stats
+        users = db.execute(
+            """SELECT user_id, rating, COUNT(*) as cnt
+               FROM feedback
+               WHERE user_id != ''
+               GROUP BY user_id, rating"""
+        ).fetchall()
+
+        user_map: dict[str, dict] = {}
+        for r in users:
+            u = r["user_id"]
+            if u not in user_map:
+                user_map[u] = {"user": u, "accurate": 0, "inaccurate": 0}
+            user_map[u][r["rating"]] = r["cnt"]
+        by_user = list(user_map.values())
+
+        # Recent feedback entries
+        recent = db.execute(
+            """SELECT f.id, f.message_id, f.user_id, f.rating, f.app_version,
+                      f.source_types, f.created_at
+               FROM feedback f ORDER BY f.created_at DESC LIMIT 50"""
+        ).fetchall()
+
+        return {
+            "total": total,
+            "accurate": accurate,
+            "inaccurate": total - accurate,
+            "rate": rate,
+            "trend": trend,
+            "by_version": by_version,
+            "by_user": by_user,
+            "recent": [dict(r) for r in recent],
+        }
 
 
 def clear_all_data(user_id: str):

@@ -23,5 +23,7 @@ ROLLING_SUMMARY_INTERVAL = 5      # update rolling summary every N rounds
 PROFILE_UPDATE_INTERVAL = 20      # update user profile every N rounds
 ROLLING_SUMMARY_MAX_CHARS = 500   # rolling summary length target
 
+APP_VERSION = os.getenv("APP_VERSION", "0.2.0")  # track which version generated each response
+
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 (DATA_DIR / "faiss_index").mkdir(parents=True, exist_ok=True)

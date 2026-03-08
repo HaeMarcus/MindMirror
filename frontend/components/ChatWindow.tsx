@@ -13,6 +13,7 @@ interface Message {
   content: string;
   messageId?: number | null;
   feedbackGiven?: "accurate" | "inaccurate" | null;
+  sourceTypes?: string;
 }
 
 export default function ChatWindow() {
@@ -79,11 +80,11 @@ export default function ChatWindow() {
           setStreamingContent(streamBuffer.current);
           setStatusText("");
         },
-        (messageId) => {
+        (messageId, sourceTypes) => {
           const fullContent = streamBuffer.current;
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: fullContent, messageId, feedbackGiven: null },
+            { role: "assistant", content: fullContent, messageId, feedbackGiven: null, sourceTypes },
           ]);
           setIsStreaming(false);
           setStatusText("");
@@ -110,7 +111,7 @@ export default function ChatWindow() {
       prev.map((m, i) => (i === index ? { ...m, feedbackGiven: rating } : m))
     );
     try {
-      await submitFeedback(msg.messageId, rating);
+      await submitFeedback(msg.messageId, rating, nickname || "", msg.sourceTypes || "");
     } catch {
       // silently fail
     }

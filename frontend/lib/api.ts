@@ -86,7 +86,7 @@ export async function sendMessage(
   message: string,
   nickname: string,
   onChunk: (text: string) => void,
-  onDone: (messageId: number | null) => void,
+  onDone: (messageId: number | null, sourceTypes?: string) => void,
   onStatus?: (status: string) => void,
 ) {
   const res = await fetch(`${API_BASE}/chat`, {
@@ -125,7 +125,7 @@ export async function sendMessage(
         } else if (currentEvent === "done") {
           try {
             const parsed = JSON.parse(data);
-            onDone(parsed.message_id ?? null);
+            onDone(parsed.message_id ?? null, parsed.source_types ?? "");
           } catch {
             onDone(null);
           }
@@ -148,12 +148,43 @@ export async function sendMessage(
   onDone(null);
 }
 
-export async function submitFeedback(messageId: number, rating: "accurate" | "inaccurate"): Promise<void> {
+export async function submitFeedback(
+  messageId: number,
+  rating: "accurate" | "inaccurate",
+  nickname: string = "",
+  sourceTypes: string = "",
+): Promise<void> {
   await fetch(`${API_BASE}/feedback`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message_id: messageId, rating }),
+    body: JSON.stringify({ message_id: messageId, rating, nickname, source_types: sourceTypes }),
   });
+}
+
+// ---- Analytics ----
+
+export interface AnalyticsData {
+  total: number;
+  accurate: number;
+  inaccurate: number;
+  rate: number;
+  trend: { date: string; accurate: number; inaccurate: number }[];
+  by_version: { version: string; accurate: number; inaccurate: number }[];
+  by_user: { user: string; accurate: number; inaccurate: number }[];
+  recent: {
+    id: number;
+    message_id: number;
+    user_id: string;
+    rating: string;
+    app_version: string;
+    source_types: string;
+    created_at: string;
+  }[];
+}
+
+export async function getAnalytics(days: number = 30): Promise<AnalyticsData> {
+  const res = await fetch(`${API_BASE}/analytics?days=${days}`);
+  return res.json();
 }
 
 // ---- Messages & Documents ----

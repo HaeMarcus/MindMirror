@@ -12,10 +12,11 @@ from app.memory import (
 )
 from app.database import (
     add_message, get_recent_messages, clear_all_data,
-    add_feedback, get_feedback_stats,
+    add_feedback, get_feedback_stats, get_feedback_analytics,
     create_user, user_exists,
 )
 from app.llm import chat_stream, generate_rolling_summary, update_user_profile
+from app.config import APP_VERSION
 
 router = APIRouter()
 
@@ -32,6 +33,8 @@ class RegisterRequest(BaseModel):
 class FeedbackRequest(BaseModel):
     message_id: int
     rating: str  # "accurate" or "inaccurate"
+    nickname: str = ""
+    source_types: str = ""  # comma-separated, e.g. "flomo_html,ledger_csv"
 
 
 # ---- User registration ----
@@ -86,8 +89,9 @@ async def chat(req: ChatRequest):
         assistant_text = "".join(full_response)
         msg_id = add_message("assistant", assistant_text, user_id=user_id)
 
-        # Signal end with message_id
-        yield f"event: done\ndata: {json.dumps({'message_id': msg_id})}\n\n"
+        # Signal end with message_id and source_types for feedback tracking
+        used_sources = ",".join(sorted({s["source_type"] for s in source_context.get("sources", [])}))
+        yield f"event: done\ndata: {json.dumps({'message_id': msg_id, 'source_types': used_sources})}\n\n"
 
         # 6. Trigger memory updates (counter-based, independent triggers)
         if should_update_summary(user_id=user_id):
@@ -126,11 +130,18 @@ async def submit_feedback(req: FeedbackRequest):
     """Record user feedback on assistant response accuracy."""
     if req.rating not in ("accurate", "inaccurate"):
         return {"error": "rating must be 'accurate' or 'inaccurate'"}
-    add_feedback(req.message_id, req.rating)
+    add_feedback(req.message_id, req.rating, user_id=req.nickname,
+                 app_version=APP_VERSION, source_types=req.source_types)
     return {"status": "ok"}
 
 
 @router.get("/feedback/stats")
 async def feedback_stats():
-    """Get feedback statistics."""
+    """Get basic feedback statistics."""
     return get_feedback_stats()
+
+
+@router.get("/analytics")
+async def analytics(days: int = Query(default=30)):
+    """Developer analytics dashboard data."""
+    return get_feedback_analytics(days=days)
