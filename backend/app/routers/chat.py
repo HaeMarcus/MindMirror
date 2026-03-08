@@ -66,47 +66,55 @@ async def chat(req: ChatRequest):
         return {"error": "消息不能为空"}
 
     def generate():
-        # 1. RAG retrieval
-        yield "event: status\ndata: 正在检索相关数据...\n\n"
-        source_context = retrieve(question, user_id=user_id)
+        import traceback
+        try:
+            # 1. RAG retrieval
+            yield "event: status\ndata: 正在检索相关数据...\n\n"
+            source_context = retrieve(question, user_id=user_id)
 
-        # 2. Gather memory
-        short_memory = get_short_memory(user_id=user_id)
-        rolling_summary = get_rolling_summary(user_id=user_id)
-        user_profile = get_user_profile(user_id=user_id)
+            # 2. Gather memory
+            short_memory = get_short_memory(user_id=user_id)
+            rolling_summary = get_rolling_summary(user_id=user_id)
+            user_profile = get_user_profile(user_id=user_id)
 
-        # 3. Save user message
-        add_message("user", question, user_id=user_id)
+            # 3. Save user message
+            add_message("user", question, user_id=user_id)
 
-        # 4. Stream response
-        yield "event: status\ndata: 正在生成回答...\n\n"
-        full_response = []
-        for chunk in chat_stream(question, short_memory, rolling_summary, user_profile, source_context):
-            full_response.append(chunk)
-            yield f"data: {json.dumps(chunk)}\n\n"
+            # 4. Stream response
+            yield "event: status\ndata: 正在生成回答...\n\n"
+            full_response = []
+            for chunk in chat_stream(question, short_memory, rolling_summary, user_profile, source_context):
+                full_response.append(chunk)
+                yield f"data: {json.dumps(chunk)}\n\n"
 
-        # 5. Save assistant response
-        assistant_text = "".join(full_response)
-        msg_id = add_message("assistant", assistant_text, user_id=user_id)
+            # 5. Save assistant response
+            assistant_text = "".join(full_response)
+            msg_id = add_message("assistant", assistant_text, user_id=user_id)
 
-        # Signal end with message_id and source_types for feedback tracking
-        used_sources = ",".join(sorted({s["source_type"] for s in source_context.get("sources", [])}))
-        yield f"event: done\ndata: {json.dumps({'message_id': msg_id, 'source_types': used_sources})}\n\n"
+            # Signal end with message_id and source_types for feedback tracking
+            used_sources = ",".join(sorted({s["source_type"] for s in source_context.get("sources", [])}))
+            yield f"event: done\ndata: {json.dumps({'message_id': msg_id, 'source_types': used_sources})}\n\n"
 
-        # 6. Trigger memory updates (counter-based, independent triggers)
-        if should_update_summary(user_id=user_id):
-            recent = get_recent_messages(limit=20, user_id=user_id)
-            old_summary = get_rolling_summary(user_id=user_id)
-            new_summary = generate_rolling_summary(recent, old_summary)
-            save_rolling_summary(new_summary, user_id=user_id)
-            mark_summary_updated(user_id=user_id)
+            # 6. Trigger memory updates (counter-based, independent triggers)
+            if should_update_summary(user_id=user_id):
+                recent = get_recent_messages(limit=20, user_id=user_id)
+                old_summary = get_rolling_summary(user_id=user_id)
+                new_summary = generate_rolling_summary(recent, old_summary)
+                save_rolling_summary(new_summary, user_id=user_id)
+                mark_summary_updated(user_id=user_id)
 
-        if should_update_profile(user_id=user_id):
-            summary = get_rolling_summary(user_id=user_id)
-            if summary:
-                new_profile = update_user_profile(get_user_profile(user_id=user_id), summary)
-                save_user_profile(new_profile, user_id=user_id)
-            mark_profile_updated(user_id=user_id)
+            if should_update_profile(user_id=user_id):
+                summary = get_rolling_summary(user_id=user_id)
+                if summary:
+                    new_profile = update_user_profile(get_user_profile(user_id=user_id), summary)
+                    save_user_profile(new_profile, user_id=user_id)
+                mark_profile_updated(user_id=user_id)
+
+        except Exception as e:
+            traceback.print_exc()
+            error_msg = f"服务器内部错误：{type(e).__name__}: {e}"
+            yield f"event: error\ndata: {json.dumps(error_msg)}\n\n"
+            yield f"event: done\ndata: {json.dumps({'message_id': None, 'source_types': ''})}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 

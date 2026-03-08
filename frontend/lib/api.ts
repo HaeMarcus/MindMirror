@@ -122,6 +122,14 @@ export async function sendMessage(
         if (currentEvent === "status") {
           onStatus?.(data);
           currentEvent = "";
+        } else if (currentEvent === "error") {
+          try {
+            const errMsg = JSON.parse(data);
+            onChunk(`\n\n[错误] ${errMsg}`);
+          } catch {
+            onChunk(`\n\n[错误] ${data}`);
+          }
+          currentEvent = "";
         } else if (currentEvent === "done") {
           try {
             const parsed = JSON.parse(data);
