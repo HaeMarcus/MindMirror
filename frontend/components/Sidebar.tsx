@@ -75,21 +75,22 @@ export default function Sidebar({
             </button>
           </div>
 
-          {/* User section */}
-          <div className="px-4 pt-4 pb-6">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-[#8a9a7e] flex items-center justify-center text-white text-[10px] font-medium">
+          {/* User capsule badge */}
+          <div className="px-4 pt-4 pb-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-sm border border-[#d4ddd0] hover:bg-white/80 hover:shadow-sm transition-all duration-200">
+              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#8a9a7e] to-[#6a7a5e] flex items-center justify-center text-white text-[10px] font-semibold shadow-sm">
                 {nickname.charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm text-gray-500 truncate">{nickname}</span>
+              <span className="text-xs text-gray-600 font-medium truncate max-w-[120px]">{nickname}</span>
             </div>
           </div>
 
           {/* Data management section */}
           <div className="px-3 pb-2">
-            <p className="text-[10px] uppercase tracking-wider text-gray-400 font-medium px-1 mb-2">
-              数据管理
-            </p>
+            <div className="flex items-center gap-2 px-1 mb-2">
+              <div className="w-[3px] h-3.5 rounded-full bg-[#8a9a7e]" />
+              <span className="text-xs font-semibold text-gray-600 tracking-wide">数据管理</span>
+            </div>
             <div className="space-y-0.5">
               <button
                 onClick={onOpenUpload}
@@ -128,9 +129,10 @@ export default function Sidebar({
 
           {/* Big Five Radar Chart */}
           <div className="px-3 pt-3 flex-1">
-            <p className="text-[10px] uppercase tracking-wider text-gray-400 font-medium px-1 mb-1">
-              大五人格画像
-            </p>
+            <div className="flex items-center gap-2 px-1 mb-1">
+              <div className="w-[3px] h-3.5 rounded-full bg-[#f97316]" />
+              <span className="text-xs font-semibold text-gray-600 tracking-wide">大五人格画像</span>
+            </div>
             <RadarChart data={bigFive} />
           </div>
 

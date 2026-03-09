@@ -200,7 +200,7 @@ export default function ChatWindow() {
       {/* Main chat area */}
       <main className="flex-1 flex flex-col min-w-0 relative">
         {/* Minimal header */}
-        <header className="flex items-center h-12 px-4 border-b border-gray-200/60 bg-white/60 backdrop-blur-sm flex-shrink-0">
+        <header className="flex items-center h-14 px-5 border-b border-gray-200/60 bg-white/60 backdrop-blur-sm flex-shrink-0">
           {!sidebarOpen && (
             <button
               onClick={() => setSidebarOpen(true)}
@@ -214,8 +214,9 @@ export default function ChatWindow() {
               </svg>
             </button>
           )}
-          <h1 className="text-sm font-semibold text-gray-700">MindMirror</h1>
-          <span className="text-xs text-gray-400 ml-2">基于多维数据的 AI 自我觉察助手</span>
+          <h1 className="text-base font-bold text-gray-800">MindMirror</h1>
+          <span className="text-sm text-gray-400 ml-2">基于多维数据的 AI 自我觉察助手</span>
+          <span className="ml-auto text-sm text-gray-400 font-medium">隐私持续守护中 🔒</span>
         </header>
 
         {/* Messages area */}
@@ -297,24 +298,9 @@ export default function ChatWindow() {
           )}
         </div>
 
-        {/* Quick actions + Input area */}
-        <div className="flex-shrink-0 px-4 md:px-8 pb-4 pt-2">
+        {/* Input area + Quick actions */}
+        <div className="flex-shrink-0 px-4 md:px-8 pb-6 pt-2">
           <div className="max-w-4xl mx-auto">
-            {/* Quick action buttons */}
-            <div className="flex gap-2 justify-center flex-wrap mb-2">
-              {QUICK_ACTIONS.map((action) => (
-                <button
-                  key={action.label}
-                  onClick={() => handleSend(action.prompt)}
-                  disabled={isStreaming}
-                  className="px-3 py-1.5 text-xs rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 text-gray-500 hover:bg-white hover:border-[#8a9a7e]/40 hover:text-[#6a7a5e] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  <span className="mr-1">{action.icon}</span>
-                  {action.label}
-                </button>
-              ))}
-            </div>
-
             <div className="relative flex items-end bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl shadow-sm focus-within:shadow-md focus-within:border-[#8a9a7e]/40 transition-all duration-200">
               {/* Upload button inside input */}
               <button
@@ -350,7 +336,21 @@ export default function ChatWindow() {
                 </svg>
               </button>
             </div>
-            <p className="text-center text-xs text-gray-400 font-medium mt-2">隐私持续守护中 🔒</p>
+
+            {/* Quick action buttons */}
+            <div className="flex gap-2 justify-center flex-wrap mt-2">
+              {QUICK_ACTIONS.map((action) => (
+                <button
+                  key={action.label}
+                  onClick={() => handleSend(action.prompt)}
+                  disabled={isStreaming}
+                  className="px-3 py-1.5 text-xs rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 text-gray-500 hover:bg-white hover:border-[#8a9a7e]/40 hover:text-[#6a7a5e] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <span className="mr-1">{action.icon}</span>
+                  {action.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </main>

@@ -80,7 +80,7 @@ function FeedbackButtons({
   if (!onFeedback) return null;
 
   return (
-    <div className="flex gap-2 mt-2 ml-8">
+    <div className="flex gap-2 mt-2 justify-center">
       <button
         onClick={() => onFeedback("accurate")}
         disabled={!!feedbackGiven}
