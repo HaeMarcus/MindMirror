@@ -225,3 +225,29 @@ export async function resetAll(nickname: string): Promise<void> {
   const res = await fetch(`${API_BASE}/reset?nickname=${encodeURIComponent(nickname)}`, { method: "DELETE" });
   if (!res.ok) throw new Error("清除失败");
 }
+
+// ---- User Profile ----
+
+export interface BigFive {
+  openness: number;
+  conscientiousness: number;
+  extraversion: number;
+  agreeableness: number;
+  neuroticism: number;
+}
+
+export interface UserProfile {
+  key_facts?: string[];
+  themes?: string[];
+  values?: string[];
+  goals?: string[];
+  patterns?: string[];
+  risks?: string[];
+  big_five?: BigFive;
+}
+
+export async function getProfile(nickname: string): Promise<UserProfile> {
+  const res = await fetch(`${API_BASE}/profile?nickname=${encodeURIComponent(nickname)}`);
+  const data = await res.json();
+  return data.profile || {};
+}

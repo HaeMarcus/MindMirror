@@ -149,6 +149,13 @@ async def feedback_stats():
     return get_feedback_stats()
 
 
+@router.get("/profile")
+async def get_profile(nickname: str = Query(...)):
+    """Get user profile including big_five scores."""
+    profile = get_user_profile(user_id=nickname.strip())
+    return {"profile": profile}
+
+
 @router.get("/analytics")
 async def analytics(days: int = Query(default=30)):
     """Developer analytics dashboard data."""

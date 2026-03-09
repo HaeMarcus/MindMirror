@@ -157,6 +157,13 @@ PROFILE_PROMPT = """基于以下对话摘要和证据，更新用户长期画像
 - 已有的 key_facts 除非用户明确纠正，否则永远保留
 - 每条 fact 用简短陈述句表达（如"本科就读于XX大学"、"有一个姐姐叫小明"）
 
+关于 big_five 大五人格评分规则：
+- 基于用户对话中展现的行为模式、情绪表达、价值取向、社交风格综合评估
+- 每个维度 0-100 分，代表该特质的强度（50 为平均水平）
+- 五个维度：openness（开放性）、conscientiousness（尽责性）、extraversion（外向性）、agreeableness（宜人性）、neuroticism（神经质）
+- 如果对话数据不足以判断某个维度，保留已有分数不变；若完全没有依据，设为 50
+- 评分应当保守稳定，不因单次对话大幅波动
+
 输出纯 JSON，格式：
 {
   "key_facts": ["关键事实1", "关键事实2"],
@@ -164,7 +171,14 @@ PROFILE_PROMPT = """基于以下对话摘要和证据，更新用户长期画像
   "values": ["价值观1", "价值观2"],
   "goals": ["目标1", "目标2"],
   "patterns": ["行为模式1", "行为模式2"],
-  "risks": ["风险点1", "风险点2"]
+  "risks": ["风险点1", "风险点2"],
+  "big_five": {
+    "openness": 50,
+    "conscientiousness": 50,
+    "extraversion": 50,
+    "agreeableness": 50,
+    "neuroticism": 50
+  }
 }"""
 
 

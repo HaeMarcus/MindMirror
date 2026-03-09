@@ -1,5 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import RadarChart from "./RadarChart";
+import { getProfile, type BigFive } from "@/lib/api";
+
 interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
@@ -17,6 +21,18 @@ export default function Sidebar({
   onOpenData,
   onReset,
 }: SidebarProps) {
+  const [bigFive, setBigFive] = useState<BigFive | null>(null);
+
+  // Load profile when sidebar opens
+  useEffect(() => {
+    if (!isOpen || !nickname) return;
+    getProfile(nickname)
+      .then((profile) => {
+        if (profile.big_five) setBigFive(profile.big_five);
+      })
+      .catch(() => {});
+  }, [isOpen, nickname]);
+
   return (
     <>
       {/* Mobile overlay */}
@@ -110,14 +126,19 @@ export default function Sidebar({
             </div>
           </div>
 
-          {/* Spacer */}
-          <div className="flex-1" />
+          {/* Big Five Radar Chart */}
+          <div className="px-3 pt-3 flex-1">
+            <p className="text-[10px] uppercase tracking-wider text-gray-400 font-medium px-1 mb-1">
+              人格画像
+            </p>
+            <RadarChart data={bigFive} />
+          </div>
 
           {/* Feedback guidance */}
-          <div className="px-4 py-4">
-            <div className="rounded-xl bg-white/50 backdrop-blur-sm px-3.5 py-3">
-              <p className="text-xs text-gray-500 leading-relaxed">
-                每次对话后，欢迎点击 👍👎 反馈洞察是否准确，帮助我们持续改进。感谢你的支持！
+          <div className="px-4 py-3">
+            <div className="rounded-xl bg-white/50 backdrop-blur-sm px-3 py-2.5">
+              <p className="text-[11px] text-gray-500 leading-relaxed">
+                每次对话后，欢迎点击 👍👎 反馈洞察是否准确，帮助我们持续改进
               </p>
             </div>
           </div>
