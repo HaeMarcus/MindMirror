@@ -54,13 +54,79 @@ function getGridPoints(level: number): string {
 export default function RadarChart({ data }: RadarChartProps) {
   if (!data) {
     return (
-      <div className="text-center py-4">
-        <div className="text-2xl mb-2 opacity-60">🧠</div>
-        <p className="text-[11px] text-gray-400 leading-relaxed">
-          对话积累中
-          <br />
-          人格洞察即将生成...
-        </p>
+      <div className="flex flex-col items-center">
+        <svg viewBox="0 0 160 160" className="w-full max-w-[180px]">
+          {/* Grid lines */}
+          {[0.25, 0.5, 0.75, 1].map((level) => (
+            <polygon
+              key={level}
+              points={getGridPoints(RADIUS * level)}
+              fill="none"
+              stroke="#d4ddd0"
+              strokeWidth="0.5"
+              opacity={0.4}
+            />
+          ))}
+
+          {/* Axis lines */}
+          {DIMENSIONS.map((_, i) => {
+            const angle = (360 / 5) * i;
+            const [x, y] = polarToXY(angle, RADIUS);
+            return (
+              <line
+                key={i}
+                x1={CENTER}
+                y1={CENTER}
+                x2={x}
+                y2={y}
+                stroke="#d4ddd0"
+                strokeWidth="0.5"
+                opacity={0.4}
+              />
+            );
+          })}
+
+          {/* Labels */}
+          {DIMENSIONS.map((d, i) => {
+            const angle = (360 / 5) * i;
+            const [x, y] = polarToXY(angle, LABEL_RADIUS);
+            return (
+              <text
+                key={d.key}
+                x={x}
+                y={y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                className="fill-gray-400"
+                fontSize="7"
+              >
+                {d.label}
+              </text>
+            );
+          })}
+
+          {/* Center text */}
+          <text
+            x={CENTER}
+            y={CENTER - 4}
+            textAnchor="middle"
+            dominantBaseline="central"
+            className="fill-gray-400"
+            fontSize="7"
+          >
+            对话积累中
+          </text>
+          <text
+            x={CENTER}
+            y={CENTER + 6}
+            textAnchor="middle"
+            dominantBaseline="central"
+            className="fill-gray-400"
+            fontSize="7"
+          >
+            人格洞察即将生成...
+          </text>
+        </svg>
       </div>
     );
   }

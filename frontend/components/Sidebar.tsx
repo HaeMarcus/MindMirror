@@ -129,7 +129,7 @@ export default function Sidebar({
           {/* Big Five Radar Chart */}
           <div className="px-3 pt-3 flex-1">
             <p className="text-[10px] uppercase tracking-wider text-gray-400 font-medium px-1 mb-1">
-              人格画像
+              大五人格画像
             </p>
             <RadarChart data={bigFive} />
           </div>
