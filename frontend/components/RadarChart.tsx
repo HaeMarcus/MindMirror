@@ -167,32 +167,32 @@ export default function RadarChart({ data }: RadarChartProps) {
           );
         })}
 
-        {/* Data polygon */}
-        <polygon
-          points={getPoints(values)}
-          fill="rgba(249, 115, 22, 0.18)"
-          stroke="#f97316"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-
-        {/* Data points */}
-        {values.map((v, i) => {
-          const angle = (360 / 5) * i;
-          const r = (v / 100) * RADIUS;
-          const [x, y] = polarToXY(angle, r);
-          return (
-            <circle
-              key={i}
-              cx={x}
-              cy={y}
-              r="2.5"
-              fill="#f97316"
-              stroke="white"
-              strokeWidth="1"
-            />
-          );
-        })}
+        {/* Data polygon + points (animated) */}
+        <g className="animate-radar-grow">
+          <polygon
+            points={getPoints(values)}
+            fill="rgba(249, 115, 22, 0.18)"
+            stroke="#f97316"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          />
+          {values.map((v, i) => {
+            const angle = (360 / 5) * i;
+            const r = (v / 100) * RADIUS;
+            const [x, y] = polarToXY(angle, r);
+            return (
+              <circle
+                key={i}
+                cx={x}
+                cy={y}
+                r="2.5"
+                fill="#f97316"
+                stroke="white"
+                strokeWidth="1"
+              />
+            );
+          })}
+        </g>
 
         {/* Labels */}
         {DIMENSIONS.map((d, i) => {

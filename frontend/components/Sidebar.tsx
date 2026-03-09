@@ -31,7 +31,6 @@ export default function Sidebar({
 }: SidebarProps) {
   const [bigFive, setBigFive] = useState<BigFive | null>(null);
   const [companionDays, setCompanionDays] = useState<number | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
 
   // Load profile when sidebar opens
   useEffect(() => {
@@ -89,19 +88,14 @@ export default function Sidebar({
 
           {/* User greeting capsule */}
           <div className="px-3 pt-3 pb-4">
-            <div
-              className="relative flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-[#e8ede4]/70 backdrop-blur-sm border border-[#d4ddd0]/40 hover:bg-[#e2e9de]/90 hover:shadow-sm transition-all duration-200 cursor-default"
-              onMouseEnter={() => setShowTooltip(true)}
-              onMouseLeave={() => setShowTooltip(false)}
-            >
+            <div className="flex flex-col items-center gap-1 px-2.5 py-2.5 rounded-xl bg-[#e8ede4]/70 backdrop-blur-sm border border-[#d4ddd0]/40 transition-all duration-200 cursor-default">
               <span className="text-sm text-gray-700 font-medium truncate w-full text-center">
                 你好，{nickname} 👋
               </span>
-              {/* Tooltip */}
-              {showTooltip && companionDays !== null && (
-                <div className="absolute left-2 -bottom-8 px-2.5 py-1 rounded-lg bg-gray-800/90 text-white text-[11px] whitespace-nowrap shadow-lg z-10">
+              {companionDays !== null && (
+                <span className="text-[11px] text-gray-400">
                   已陪伴你 {companionDays} 天
-                </div>
+                </span>
               )}
             </div>
           </div>

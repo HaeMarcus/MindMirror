@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import MessageBubble from "./MessageBubble";
 import Sidebar from "./Sidebar";
 import UploadPanel from "./UploadPanel";
@@ -14,6 +14,7 @@ interface Message {
   messageId?: number | null;
   feedbackGiven?: "accurate" | "inaccurate" | null;
   sourceTypes?: string;
+  timestamp?: string;
 }
 
 const EMPTY_STATE_CARDS = [
@@ -63,6 +64,7 @@ export default function ChatWindow() {
   const streamBuffer = useRef("");
   const [streamingContent, setStreamingContent] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
 
   // Initialize nickname from localStorage
   useEffect(() => {
@@ -88,7 +90,7 @@ export default function ChatWindow() {
     getMessages(nickname)
       .then((msgs) => {
         if (msgs.length > 0) {
-          setMessages(msgs.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })));
+          setMessages(msgs.map((m) => ({ role: m.role as "user" | "assistant", content: m.content, timestamp: m.created_at })));
         }
       })
       .catch(() => {});
@@ -98,6 +100,26 @@ export default function ChatWindow() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isStreaming, streamingContent]);
+
+  // Track scroll position for scroll-to-bottom button
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    setShowScrollBtn(!atBottom);
+  }, []);
+
+  const scrollToBottom = () => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  };
+
+  // Auto-resize textarea
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 128) + "px";
+  };
 
   const handleNicknameConfirm = (name: string) => {
     setNickname(name);
@@ -109,7 +131,8 @@ export default function ChatWindow() {
     if (!msg || isStreaming || !nickname) return;
 
     setInput("");
-    setMessages((prev) => [...prev, { role: "user", content: msg }]);
+    if (inputRef.current) { inputRef.current.style.height = "auto"; }
+    setMessages((prev) => [...prev, { role: "user", content: msg, timestamp: new Date().toISOString() }]);
     setIsStreaming(true);
     setStatusText("正在处理...");
     streamBuffer.current = "";
@@ -127,7 +150,7 @@ export default function ChatWindow() {
           const fullContent = streamBuffer.current;
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: fullContent, messageId, feedbackGiven: null, sourceTypes },
+            { role: "assistant", content: fullContent, messageId, feedbackGiven: null, sourceTypes, timestamp: new Date().toISOString() },
           ]);
           setIsStreaming(false);
           setStatusText("");
@@ -220,7 +243,7 @@ export default function ChatWindow() {
         </header>
 
         {/* Messages area */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto relative" onScroll={handleScroll}>
           {!hasMessages ? (
             /* Empty state */
             <div className="flex flex-col items-center justify-center h-full px-4 animate-fade-in">
@@ -234,7 +257,7 @@ export default function ChatWindow() {
                 </p>
 
                 {/* Insight cards grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto stagger-grid">
                   {EMPTY_STATE_CARDS.map((card) => (
                     <button
                       key={card.title}
@@ -246,7 +269,7 @@ export default function ChatWindow() {
                         }
                       }}
                       disabled={isStreaming}
-                      className="group text-left p-4 rounded-2xl bg-white/70 backdrop-blur-sm border border-gray-200/60 hover:border-[#8a9a7e]/40 hover:bg-white hover:shadow-md transition-all duration-200 disabled:opacity-40"
+                      className="group text-left p-4 rounded-2xl bg-white/70 backdrop-blur-sm border border-gray-200/60 hover:border-[#8a9a7e]/40 hover:bg-white hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-40 animate-fade-in"
                     >
                       <span className="text-2xl block mb-2">{card.icon}</span>
                       <p className="text-sm font-medium text-gray-700 group-hover:text-[#6a7a5e] transition-colors">
@@ -266,6 +289,7 @@ export default function ChatWindow() {
                   <MessageBubble
                     role={msg.role}
                     content={msg.content}
+                    timestamp={msg.timestamp}
                     feedbackGiven={msg.feedbackGiven}
                     onFeedback={msg.role === "assistant" && msg.messageId ? (rating) => handleFeedback(i, rating) : undefined}
                   />
@@ -298,6 +322,18 @@ export default function ChatWindow() {
           )}
         </div>
 
+        {/* Scroll to bottom button */}
+        {showScrollBtn && hasMessages && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-28 right-6 z-10 p-2.5 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200/60 shadow-lg text-gray-500 hover:text-gray-700 hover:shadow-xl transition-all duration-200 animate-scroll-btn"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+        )}
+
         {/* Input area + Quick actions */}
         <div className="flex-shrink-0 px-4 md:px-8 pb-6 pt-2">
           <div className="max-w-4xl mx-auto">
@@ -316,11 +352,12 @@ export default function ChatWindow() {
               <textarea
                 ref={inputRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder="输入你的问题..."
                 rows={1}
                 className="flex-1 resize-none bg-transparent px-2 py-3 text-sm focus:outline-none max-h-32"
+                style={{ overflow: "hidden" }}
                 disabled={isStreaming}
               />
 

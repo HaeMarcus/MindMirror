@@ -5,8 +5,17 @@ interface MessageBubbleProps {
   content: string;
   nickname?: string;
   isStreaming?: boolean;
+  timestamp?: string;
   feedbackGiven?: "accurate" | "inaccurate" | null;
   onFeedback?: (rating: "accurate" | "inaccurate") => void;
+}
+
+function formatTime(ts?: string): string | null {
+  if (!ts) return null;
+  try {
+    const d = new Date(ts);
+    return d.toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  } catch { return null; }
 }
 
 const SECTION_LABELS = [
@@ -113,10 +122,17 @@ function FeedbackButtons({
   );
 }
 
-export default function MessageBubble({ role, content, isStreaming, feedbackGiven, onFeedback }: MessageBubbleProps) {
+export default function MessageBubble({ role, content, isStreaming, timestamp, feedbackGiven, onFeedback }: MessageBubbleProps) {
+  const timeStr = formatTime(timestamp);
+
   if (role === "user") {
     return (
-      <div className="flex justify-end mb-4">
+      <div className="group flex justify-end mb-4 items-end gap-2">
+        {timeStr && (
+          <span className="text-[11px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pb-1 select-none">
+            {timeStr}
+          </span>
+        )}
         <div className="max-w-[88%] lg:max-w-[82%] rounded-2xl rounded-br-md bg-[#8a9a7e] text-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm">
           {content}
         </div>
@@ -128,7 +144,7 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
 
   if (sections.length >= 1) {
     return (
-      <div className="mb-4">
+      <div className="group mb-4">
         <div className="flex justify-start items-start gap-3">
           <ClaudeAvatar />
           <div className="max-w-[92%] lg:max-w-[88%]">
@@ -139,7 +155,7 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
             )}
             <div className="space-y-2.5 animate-card-stagger">
               {sections.map((sec) => (
-                <div key={sec.label} className={`${sec.bg} backdrop-blur-sm ${sec.border} border rounded-xl px-4 py-3 shadow-sm animate-fade-in`}>
+                <div key={sec.label} className={`${sec.bg} backdrop-blur-sm ${sec.border} border rounded-xl px-4 py-3 shadow-sm animate-fade-in hover:-translate-y-0.5 hover:shadow-md transition-all duration-200`}>
                   <div className={`text-xs font-semibold ${sec.color} mb-1.5 flex items-center gap-1`}>
                     <span>{sec.icon}</span>
                     <span>{sec.label}</span>
@@ -152,13 +168,18 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
             </div>
           </div>
         </div>
+        {timeStr && (
+          <span className="text-[11px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-11 mt-1 select-none">
+            {timeStr}
+          </span>
+        )}
         {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}
       </div>
     );
   }
 
   return (
-    <div className="mb-4">
+    <div className="group mb-4">
       <div className="flex justify-start items-start gap-2">
         <ClaudeAvatar />
         <div className="max-w-[92%] lg:max-w-[88%]">
@@ -167,6 +188,11 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
           </div>
         </div>
       </div>
+      {timeStr && (
+        <span className="text-[11px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-10 mt-1 select-none">
+          {timeStr}
+        </span>
+      )}
       {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}
     </div>
   );

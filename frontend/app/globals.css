@@ -40,6 +40,31 @@
 .animate-card-stagger > *:nth-child(2) { animation-delay: 80ms; }
 .animate-card-stagger > *:nth-child(3) { animation-delay: 160ms; }
 
+/* Radar chart data grow-in from center */
+@keyframes radar-grow {
+  from { transform: scale(0); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.animate-radar-grow {
+  animation: radar-grow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transform-origin: 80px 80px;
+}
+
+/* Empty state cards staggered entrance */
+.stagger-grid > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-grid > *:nth-child(2) { animation-delay: 60ms; }
+.stagger-grid > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-grid > *:nth-child(4) { animation-delay: 180ms; }
+
+/* Scroll-to-bottom button */
+@keyframes scroll-btn-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-scroll-btn {
+  animation: scroll-btn-in 0.2s ease-out both;
+}
+
 /* Shimmer loading effect */
 .shimmer {
   background: linear-gradient(90deg, transparent 30%, rgba(138,154,126,0.08) 50%, transparent 70%);

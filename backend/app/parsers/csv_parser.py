@@ -1,42 +1,153 @@
 import csv
 import hashlib
 import io
+import re
 from collections import defaultdict
 
 
-CORE_COLUMNS = {"时间", "分类", "二级分类", "类型", "金额", "币种", "备注", "标签"}
+# ---------------------------------------------------------------------------
+# Column alias mapping: canonical_name -> list of known aliases
+# Covers: 钱迹, 随手记, 微信支付, 支付宝, 挖财, 网易有钱, etc.
+# ---------------------------------------------------------------------------
+COLUMN_ALIASES: dict[str, list[str]] = {
+    "时间": ["时间", "日期", "交易时间", "交易日期", "记账时间", "记账日期", "付款时间", "创建时间", "date", "time"],
+    "分类": ["分类", "类别", "交易分类", "类型名称", "一级分类", "交易类型", "category"],
+    "二级分类": ["二级分类", "子分类", "子类别", "细分类", "subcategory"],
+    "类型": ["类型", "收支", "收支类型", "收/支", "收支方向", "收支分类", "type"],
+    "金额": ["金额", "金额(元)", "金额（元）", "交易金额", "发生金额", "amount"],
+    "币种": ["币种", "货币", "currency"],
+    "备注": ["备注", "说明", "备注信息", "商品说明", "商品", "交易对方", "对方", "描述", "note", "remark", "description"],
+    "标签": ["标签", "tag", "标记", "tags"],
+}
+
+# Only time + amount are truly required; everything else is optional
+REQUIRED_CANONICAL = {"时间", "金额"}
+
+# Type value normalization
+INCOME_VALUES = {"收入", "入", "income", "收"}
+EXPENSE_VALUES = {"支出", "出", "expense", "支"}
+
+
+def _build_column_map(fieldnames: list[str]) -> dict[str, str]:
+    """Map actual CSV column names to canonical names via alias matching.
+
+    Returns dict: canonical_name -> actual_column_name
+    """
+    col_map: dict[str, str] = {}
+    # Strip BOM and whitespace from field names
+    cleaned = [f.lstrip("\ufeff").strip() for f in fieldnames]
+
+    for canonical, aliases in COLUMN_ALIASES.items():
+        for alias in aliases:
+            alias_lower = alias.lower()
+            for actual, cleaned_name in zip(fieldnames, cleaned):
+                if cleaned_name.lower() == alias_lower and canonical not in col_map:
+                    col_map[canonical] = actual
+                    break
+            if canonical in col_map:
+                break
+
+    return col_map
+
+
+def _clean_amount(raw: str) -> float:
+    """Parse amount string, handling ¥/￥ symbols, commas, +/- signs."""
+    if not raw:
+        return 0.0
+    s = raw.strip()
+    s = s.replace("¥", "").replace("￥", "").replace(",", "").replace(" ", "")
+    # Handle parenthesized negatives like (100.00)
+    if s.startswith("(") and s.endswith(")"):
+        s = "-" + s[1:-1]
+    try:
+        return float(s)
+    except ValueError:
+        return 0.0
+
+
+def _infer_type(txn_type_raw: str, amount: float) -> str:
+    """Normalize transaction type to '收入' or '支出'.
+
+    Falls back to amount sign if type column is missing or unrecognized.
+    """
+    if txn_type_raw:
+        t = txn_type_raw.strip().lower()
+        if t in INCOME_VALUES:
+            return "收入"
+        if t in EXPENSE_VALUES:
+            return "支出"
+        # Some apps use "不计收支" or "转账" etc.
+        if "收入" in txn_type_raw:
+            return "收入"
+        if "支出" in txn_type_raw:
+            return "支出"
+    # Infer from sign: negative = expense, positive = income
+    if amount < 0:
+        return "支出"
+    elif amount > 0:
+        return "收入"
+    return ""
 
 
 def parse_ledger_csv(content: str, source_name: str) -> dict:
-    """Parse 钱迹 CSV, return document + chunks (rows + summaries)."""
-    reader = csv.DictReader(io.StringIO(content))
-    actual_cols = set(reader.fieldnames or [])
+    """Parse ledger CSV with flexible column matching.
 
-    missing = CORE_COLUMNS - actual_cols
+    Supports: 钱迹, 随手记, 微信支付, 支付宝, and other common formats.
+    """
+    # Handle BOM
+    if content.startswith("\ufeff"):
+        content = content[1:]
+
+    reader = csv.DictReader(io.StringIO(content))
+    if not reader.fieldnames:
+        raise ValueError("CSV 文件为空或无法解析表头")
+
+    col_map = _build_column_map(list(reader.fieldnames))
+
+    # Check required columns
+    missing = REQUIRED_CANONICAL - set(col_map.keys())
     if missing:
-        raise ValueError(f"CSV 缺少核心列: {missing}")
+        labels = {"时间": "时间/日期", "金额": "金额/amount"}
+        missing_labels = [labels.get(m, m) for m in missing]
+        raise ValueError(f"CSV 缺少必要列: {', '.join(missing_labels)}。检测到的列: {', '.join(reader.fieldnames)}")
 
     doc_id = _hash_id("ledger_csv", source_name, content[:200])
     chunks = []
     rows_data = []
     times = []
 
+    def _get(row: dict, canonical: str, default: str = "") -> str:
+        actual_col = col_map.get(canonical)
+        if actual_col is None:
+            return default
+        return (row.get(actual_col) or "").strip()
+
     for i, row in enumerate(reader):
-        time_str = row.get("时间", "").strip()
-        category = row.get("分类", "").strip()
-        sub_category = row.get("二级分类", "").strip()
-        txn_type = row.get("类型", "").strip()
-        amount = row.get("金额", "0").strip()
-        currency = row.get("币种", "CNY").strip()
-        note = row.get("备注", "").strip()
-        tag = row.get("标签", "").strip()
+        time_str = _get(row, "时间")
+        category = _get(row, "分类")
+        sub_category = _get(row, "二级分类")
+        txn_type_raw = _get(row, "类型")
+        amount_raw = _get(row, "金额", "0")
+        currency = _get(row, "币种", "CNY")
+        note = _get(row, "备注")
+        tag = _get(row, "标签")
+
+        amount = _clean_amount(amount_raw)
+        txn_type = _infer_type(txn_type_raw, amount)
+
+        # Ensure amount is positive for downstream summaries
+        amount_abs = abs(amount)
 
         if time_str:
             times.append(time_str)
 
+        # If no category, try to use note as a fallback label
+        if not category and note:
+            category = "其他"
+
         # Build searchable text for each row
         cat_str = f"{category}/{sub_category}" if sub_category else category
-        text = f"{time_str} {txn_type} {amount}{currency} {cat_str}"
+        text = f"{time_str} {txn_type} {amount_abs}{currency} {cat_str}"
         if note:
             text += f" {note}"
         if tag:
@@ -55,7 +166,7 @@ def parse_ledger_csv(content: str, source_name: str) -> dict:
                 "category": category,
                 "sub_category": sub_category,
                 "type": txn_type,
-                "amount": amount,
+                "amount": str(amount_abs),
                 "note": note,
             },
         })
@@ -65,7 +176,7 @@ def parse_ledger_csv(content: str, source_name: str) -> dict:
             "category": category,
             "sub_category": sub_category,
             "type": txn_type,
-            "amount": float(amount) if amount else 0,
+            "amount": amount_abs,
             "note": note,
         })
 
@@ -148,6 +259,8 @@ def _generate_summaries(doc_id: str, source_name: str, rows: list[dict]) -> list
     cat_totals = defaultdict(lambda: {"income": 0, "expense": 0, "count": 0, "notes": []})
     for r in rows:
         key = r["category"]
+        if not key:
+            key = "未分类"
         if r["type"] == "收入":
             cat_totals[key]["income"] += r["amount"]
         elif r["type"] == "支出":
@@ -219,27 +332,42 @@ def _generate_summaries(doc_id: str, source_name: str, rows: list[dict]) -> list
 
 
 def _normalize_time(time_str: str) -> str:
-    """Normalize time string to YYYY-MM-DD HH:MM for correct sorting."""
+    """Normalize time string to YYYY-MM-DD HH:MM for correct sorting.
+
+    Handles: 2025/12/31 15:53, 2025-12-31 15:53, 2025年12月31日 etc.
+    """
     if not time_str:
         return ""
-    parts = time_str.replace("/", "-").split(" ")
+    # Replace Chinese date markers and common separators
+    s = time_str.replace("年", "-").replace("月", "-").replace("日", "").replace("/", "-").strip()
+    parts = s.split(" ", 1)
     date_parts = parts[0].split("-")
     if len(date_parts) == 3:
-        normalized_date = f"{date_parts[0]}-{int(date_parts[1]):02d}-{int(date_parts[2]):02d}"
+        try:
+            normalized_date = f"{date_parts[0]}-{int(date_parts[1]):02d}-{int(date_parts[2]):02d}"
+        except ValueError:
+            normalized_date = parts[0]
     elif len(date_parts) == 2:
-        normalized_date = f"{date_parts[0]}-{int(date_parts[1]):02d}"
+        try:
+            normalized_date = f"{date_parts[0]}-{int(date_parts[1]):02d}"
+        except ValueError:
+            normalized_date = parts[0]
     else:
         normalized_date = parts[0]
     return f"{normalized_date} {parts[1]}" if len(parts) > 1 else normalized_date
 
 
 def _extract_month(time_str: str) -> str:
-    """Extract YYYY-MM from time string like '2025/12/31 15:53'."""
+    """Extract YYYY-MM from time string like '2025/12/31 15:53' or '2025年12月31日'."""
     if not time_str:
         return ""
-    parts = time_str.replace("/", "-").split(" ")[0].split("-")
+    s = time_str.replace("年", "-").replace("月", "-").replace("日", "").replace("/", "-")
+    parts = s.split(" ")[0].split("-")
     if len(parts) >= 2:
-        return f"{parts[0]}-{int(parts[1]):02d}"
+        try:
+            return f"{parts[0]}-{int(parts[1]):02d}"
+        except ValueError:
+            return ""
     return ""
 
 
