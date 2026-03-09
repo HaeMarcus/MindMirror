@@ -109,23 +109,13 @@ export default function RadarChart({ data }: RadarChartProps) {
           {/* Center text */}
           <text
             x={CENTER}
-            y={CENTER - 4}
+            y={CENTER}
             textAnchor="middle"
             dominantBaseline="central"
             className="fill-gray-400"
             fontSize="7"
           >
-            对话积累中
-          </text>
-          <text
-            x={CENTER}
-            y={CENTER + 6}
-            textAnchor="middle"
-            dominantBaseline="central"
-            className="fill-gray-400"
-            fontSize="7"
-          >
-            人格洞察即将生成...
+            等待首次对话...
           </text>
         </svg>
       </div>
@@ -234,6 +224,9 @@ export default function RadarChart({ data }: RadarChartProps) {
           );
         })}
       </svg>
+      <p className="text-[11px] text-gray-400 mt-1 text-center">
+        人格数据会随对话持续更新
+      </p>
     </div>
   );
 }

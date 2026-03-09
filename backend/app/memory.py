@@ -51,11 +51,13 @@ def _set_counter(user_id: str, key: str, value: int):
 
 def should_update_summary(user_id: str) -> bool:
     """Check if rolling summary needs updating.
-    Uses a stored counter instead of fragile modulo arithmetic.
-    Triggers when: current_round - last_update_round >= ROLLING_SUMMARY_INTERVAL
+    Triggers on first round (bootstrap) or every ROLLING_SUMMARY_INTERVAL rounds.
     """
     current_round = _get_current_round(user_id)
     last_updated = _get_counter(user_id, "_summary_updated_at_round")
+    # First round bootstrap: generate initial summary immediately
+    if current_round >= 1 and last_updated == 0:
+        return True
     return current_round - last_updated >= ROLLING_SUMMARY_INTERVAL
 
 
@@ -66,10 +68,13 @@ def mark_summary_updated(user_id: str):
 
 def should_update_profile(user_id: str) -> bool:
     """Check if user profile needs updating.
-    Independent trigger: current_round - last_update_round >= PROFILE_UPDATE_INTERVAL
+    Triggers on first round (bootstrap) or every PROFILE_UPDATE_INTERVAL rounds.
     """
     current_round = _get_current_round(user_id)
     last_updated = _get_counter(user_id, "_profile_updated_at_round")
+    # First round bootstrap: generate initial profile immediately
+    if current_round >= 1 and last_updated == 0:
+        return True
     return current_round - last_updated >= PROFILE_UPDATE_INTERVAL
 
 

@@ -105,6 +105,10 @@ async def chat(req: ChatRequest):
 
             if should_update_profile(user_id=user_id):
                 summary = get_rolling_summary(user_id=user_id)
+                if not summary:
+                    # Fallback for first round: use recent messages as summary
+                    recent = get_recent_messages(limit=4, user_id=user_id)
+                    summary = "\n".join(f"{m['role']}: {m['content'][:300]}" for m in recent)
                 if summary:
                     new_profile = update_user_profile(get_user_profile(user_id=user_id), summary)
                     save_user_profile(new_profile, user_id=user_id)
