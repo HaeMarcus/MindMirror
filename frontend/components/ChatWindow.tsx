@@ -259,7 +259,7 @@ export default function ChatWindow() {
             </div>
           ) : (
             /* Chat messages */
-            <div className="max-w-3xl mx-auto px-4 md:px-8 py-6">
+            <div className="max-w-4xl mx-auto px-4 md:px-8 py-6">
               {messages.map((msg, i) => (
                 <div key={i} className="animate-msg-in">
                   <MessageBubble
@@ -299,7 +299,7 @@ export default function ChatWindow() {
 
         {/* Quick actions + Input area */}
         <div className="flex-shrink-0 px-4 md:px-8 pb-4 pt-2">
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-4xl mx-auto">
             {/* Quick action buttons */}
             <div className="flex gap-2 justify-center flex-wrap mb-2">
               {QUICK_ACTIONS.map((action) => (
