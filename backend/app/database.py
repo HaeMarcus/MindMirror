@@ -130,6 +130,12 @@ def user_exists(nickname: str) -> bool:
         return row is not None
 
 
+def get_user_created_at(nickname: str) -> Optional[str]:
+    with get_db() as db:
+        row = db.execute("SELECT created_at FROM users WHERE nickname = ?", (nickname,)).fetchone()
+        return row["created_at"] if row else None
+
+
 # ---- Document CRUD ----
 
 def insert_document(doc_id: str, source_type: str, source_name: str,

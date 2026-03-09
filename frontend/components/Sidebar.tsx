@@ -13,6 +13,14 @@ interface SidebarProps {
   onReset: () => void;
 }
 
+function getDaysAgo(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  const created = new Date(dateStr + "Z");
+  const now = new Date();
+  const diff = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.max(diff, 0);
+}
+
 export default function Sidebar({
   isOpen,
   onToggle,
@@ -22,13 +30,17 @@ export default function Sidebar({
   onReset,
 }: SidebarProps) {
   const [bigFive, setBigFive] = useState<BigFive | null>(null);
+  const [companionDays, setCompanionDays] = useState<number | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   // Load profile when sidebar opens
   useEffect(() => {
     if (!isOpen || !nickname) return;
     getProfile(nickname)
-      .then((profile) => {
-        if (profile.big_five) setBigFive(profile.big_five);
+      .then((data) => {
+        if (data.profile.big_five) setBigFive(data.profile.big_five);
+        const days = getDaysAgo(data.created_at);
+        setCompanionDays(days);
       })
       .catch(() => {});
   }, [isOpen, nickname]);
@@ -75,13 +87,22 @@ export default function Sidebar({
             </button>
           </div>
 
-          {/* User capsule badge */}
+          {/* User greeting capsule */}
           <div className="px-3 pt-3 pb-4">
-            <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-white/50 backdrop-blur-sm border border-[#d4ddd0]/60 hover:bg-white/70 hover:shadow-sm transition-all duration-200">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#8a9a7e] to-[#6a7a5e] flex items-center justify-center text-white text-xs font-semibold shadow-sm">
-                {nickname.charAt(0).toUpperCase()}
-              </div>
-              <span className="text-sm text-gray-700 font-medium truncate">{nickname}</span>
+            <div
+              className="relative flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-[#e8ede4]/70 backdrop-blur-sm border border-[#d4ddd0]/40 hover:bg-[#e2e9de]/90 hover:shadow-sm transition-all duration-200 cursor-default"
+              onMouseEnter={() => setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+            >
+              <span className="text-sm text-gray-700 font-medium truncate">
+                你好，{nickname} 👋
+              </span>
+              {/* Tooltip */}
+              {showTooltip && companionDays !== null && (
+                <div className="absolute left-2 -bottom-8 px-2.5 py-1 rounded-lg bg-gray-800/90 text-white text-[11px] whitespace-nowrap shadow-lg z-10">
+                  已陪伴你 {companionDays} 天
+                </div>
+              )}
             </div>
           </div>
 

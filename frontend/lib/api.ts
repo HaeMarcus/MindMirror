@@ -246,8 +246,8 @@ export interface UserProfile {
   big_five?: BigFive;
 }
 
-export async function getProfile(nickname: string): Promise<UserProfile> {
+export async function getProfile(nickname: string): Promise<{ profile: UserProfile; created_at: string | null }> {
   const res = await fetch(`${API_BASE}/profile?nickname=${encodeURIComponent(nickname)}`);
   const data = await res.json();
-  return data.profile || {};
+  return { profile: data.profile || {}, created_at: data.created_at || null };
 }

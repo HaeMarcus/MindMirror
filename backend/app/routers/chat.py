@@ -13,7 +13,7 @@ from app.memory import (
 from app.database import (
     add_message, get_recent_messages, clear_all_data,
     add_feedback, get_feedback_stats, get_feedback_analytics,
-    create_user, user_exists,
+    create_user, user_exists, get_user_created_at,
 )
 from app.llm import chat_stream, generate_rolling_summary, update_user_profile
 from app.config import APP_VERSION
@@ -151,9 +151,11 @@ async def feedback_stats():
 
 @router.get("/profile")
 async def get_profile(nickname: str = Query(...)):
-    """Get user profile including big_five scores."""
-    profile = get_user_profile(user_id=nickname.strip())
-    return {"profile": profile}
+    """Get user profile including big_five scores and created_at."""
+    uid = nickname.strip()
+    profile = get_user_profile(user_id=uid)
+    created_at = get_user_created_at(uid)
+    return {"profile": profile, "created_at": created_at}
 
 
 @router.get("/analytics")
