@@ -44,7 +44,7 @@ export default function Sidebar({
           <div className="flex items-center justify-between px-4 pt-5 pb-1">
             <div className="flex items-center gap-2">
               <span className="text-xl">🪞</span>
-              <span className="font-bold text-gray-800 text-base">MindMirror</span>
+              <span className="font-bold text-gray-800 text-lg">MindMirror</span>
             </div>
             <button
               onClick={onToggle}
@@ -61,8 +61,8 @@ export default function Sidebar({
 
           {/* User section */}
           <div className="px-4 pt-4 pb-6">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#8a9a7e] flex items-center justify-center text-white text-xs font-medium">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-[#8a9a7e] flex items-center justify-center text-white text-[10px] font-medium">
                 {nickname.charAt(0).toUpperCase()}
               </div>
               <span className="text-sm text-gray-500 truncate">{nickname}</span>

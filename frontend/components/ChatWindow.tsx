@@ -265,7 +265,6 @@ export default function ChatWindow() {
                   <MessageBubble
                     role={msg.role}
                     content={msg.content}
-                    nickname={nickname || ""}
                     feedbackGiven={msg.feedbackGiven}
                     onFeedback={msg.role === "assistant" && msg.messageId ? (rating) => handleFeedback(i, rating) : undefined}
                   />
@@ -274,12 +273,10 @@ export default function ChatWindow() {
               {isStreaming && (
                 <div className="animate-msg-in">
                   {streamingContent ? (
-                    <MessageBubble role="assistant" content={streamingContent} nickname={nickname || ""} isStreaming />
+                    <MessageBubble role="assistant" content={streamingContent} isStreaming />
                   ) : (
-                    <div className="flex justify-start mb-4 items-start gap-2.5">
-                      <div className="w-7 h-7 rounded-full bg-[#8a9a7e] flex items-center justify-center text-white text-xs flex-shrink-0 mt-0.5">
-                        🪞
-                      </div>
+                    <div className="flex justify-start mb-4 items-start gap-2">
+                      <img src="/claude-icon.svg" alt="Claude" className="w-6 h-6 flex-shrink-0 mt-1" />
                       <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl px-4 py-3 shadow-sm">
                         <div className="flex items-center gap-2">
                           <div className="flex gap-1">
@@ -304,7 +301,7 @@ export default function ChatWindow() {
         <div className="flex-shrink-0 px-4 md:px-8 pb-4 pt-2">
           <div className="max-w-3xl mx-auto">
             {/* Quick action buttons */}
-            <div className="flex gap-2 justify-start flex-wrap mb-2">
+            <div className="flex gap-2 justify-center flex-wrap mb-2">
               {QUICK_ACTIONS.map((action) => (
                 <button
                   key={action.label}
