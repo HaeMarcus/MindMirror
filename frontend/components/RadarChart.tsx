@@ -21,8 +21,9 @@ const DIMENSIONS = [
 ];
 
 const CENTER = 80;
-const RADIUS = 60;
-const LABEL_RADIUS = 75;
+const RADIUS = 55;
+const LABEL_RADIUS = 70;
+const VIEWBOX = "-5 -5 170 170";
 
 function polarToXY(angle: number, r: number): [number, number] {
   // Start from top (-90°), go clockwise
@@ -55,16 +56,16 @@ export default function RadarChart({ data }: RadarChartProps) {
   if (!data) {
     return (
       <div className="flex flex-col items-center">
-        <svg viewBox="0 0 160 160" className="w-full max-w-[180px]">
+        <svg viewBox={VIEWBOX} className="w-full max-w-[180px]">
           {/* Grid lines */}
           {[0.25, 0.5, 0.75, 1].map((level) => (
             <polygon
               key={level}
               points={getGridPoints(RADIUS * level)}
               fill="none"
-              stroke="#d4ddd0"
-              strokeWidth="0.5"
-              opacity={0.4}
+              stroke="#9ca3af"
+              strokeWidth="0.7"
+              opacity={0.5}
             />
           ))}
 
@@ -79,9 +80,9 @@ export default function RadarChart({ data }: RadarChartProps) {
                 y1={CENTER}
                 x2={x}
                 y2={y}
-                stroke="#d4ddd0"
-                strokeWidth="0.5"
-                opacity={0.4}
+                stroke="#9ca3af"
+                strokeWidth="0.7"
+                opacity={0.5}
               />
             );
           })}
@@ -97,7 +98,7 @@ export default function RadarChart({ data }: RadarChartProps) {
                 y={y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                className="fill-gray-400"
+                className="fill-gray-500"
                 fontSize="7"
               >
                 {d.label}
@@ -135,16 +136,16 @@ export default function RadarChart({ data }: RadarChartProps) {
 
   return (
     <div className="flex flex-col items-center">
-      <svg viewBox="0 0 160 160" className="w-full max-w-[180px]">
+      <svg viewBox={VIEWBOX} className="w-full max-w-[180px]">
         {/* Grid lines */}
         {[0.25, 0.5, 0.75, 1].map((level) => (
           <polygon
             key={level}
             points={getGridPoints(RADIUS * level)}
             fill="none"
-            stroke="#d4ddd0"
-            strokeWidth="0.5"
-            opacity={0.6}
+            stroke="#9ca3af"
+            strokeWidth="0.7"
+            opacity={0.4}
           />
         ))}
 
@@ -159,9 +160,9 @@ export default function RadarChart({ data }: RadarChartProps) {
               y1={CENTER}
               x2={x}
               y2={y}
-              stroke="#d4ddd0"
-              strokeWidth="0.5"
-              opacity={0.6}
+              stroke="#9ca3af"
+              strokeWidth="0.7"
+              opacity={0.4}
             />
           );
         })}
@@ -169,8 +170,8 @@ export default function RadarChart({ data }: RadarChartProps) {
         {/* Data polygon */}
         <polygon
           points={getPoints(values)}
-          fill="rgba(138, 154, 126, 0.25)"
-          stroke="#8a9a7e"
+          fill="rgba(249, 115, 22, 0.18)"
+          stroke="#f97316"
           strokeWidth="1.5"
           strokeLinejoin="round"
         />
@@ -186,7 +187,7 @@ export default function RadarChart({ data }: RadarChartProps) {
               cx={x}
               cy={y}
               r="2.5"
-              fill="#8a9a7e"
+              fill="#f97316"
               stroke="white"
               strokeWidth="1"
             />
@@ -204,7 +205,7 @@ export default function RadarChart({ data }: RadarChartProps) {
               y={y}
               textAnchor="middle"
               dominantBaseline="central"
-              className="fill-gray-500"
+              className="fill-gray-600"
               fontSize="7"
             >
               {d.label}
@@ -224,7 +225,7 @@ export default function RadarChart({ data }: RadarChartProps) {
               y={y}
               textAnchor="middle"
               dominantBaseline="central"
-              className="fill-[#6a7a5e]"
+              className="fill-[#ea580c]"
               fontSize="6"
               fontWeight="600"
             >
