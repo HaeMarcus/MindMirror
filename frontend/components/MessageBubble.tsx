@@ -117,7 +117,7 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
   if (role === "user") {
     return (
       <div className="flex justify-end mb-4">
-        <div className="max-w-[75%] lg:max-w-[65%] rounded-2xl rounded-br-md bg-[#8a9a7e] text-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm">
+        <div className="max-w-[88%] lg:max-w-[82%] rounded-2xl rounded-br-md bg-[#8a9a7e] text-white px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap shadow-sm">
           {content}
         </div>
       </div>
@@ -131,7 +131,7 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
       <div className="mb-4">
         <div className="flex justify-start items-start gap-2">
           <ClaudeAvatar />
-          <div className="max-w-[82%] lg:max-w-[75%]">
+          <div className="max-w-[92%] lg:max-w-[88%]">
             {preamble && (
               <div className="rounded-2xl rounded-bl-md bg-white/80 backdrop-blur-sm border border-gray-200/60 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm mb-3">
                 {stripMarkdown(preamble)}
@@ -161,7 +161,7 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
     <div className="mb-4">
       <div className="flex justify-start items-start gap-2">
         <ClaudeAvatar />
-        <div className="max-w-[82%]">
+        <div className="max-w-[92%] lg:max-w-[88%]">
           <div className="rounded-2xl rounded-bl-md bg-white/80 backdrop-blur-sm border border-gray-200/60 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap shadow-sm">
             {stripMarkdown(content)}
           </div>

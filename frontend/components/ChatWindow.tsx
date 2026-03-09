@@ -338,13 +338,13 @@ export default function ChatWindow() {
             </div>
 
             {/* Quick action buttons */}
-            <div className="flex gap-2 justify-center flex-wrap mt-2">
+            <div className="flex gap-2.5 justify-center flex-wrap mt-2.5">
               {QUICK_ACTIONS.map((action) => (
                 <button
                   key={action.label}
                   onClick={() => handleSend(action.prompt)}
                   disabled={isStreaming}
-                  className="px-3 py-1.5 text-xs rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 text-gray-500 hover:bg-white hover:border-[#8a9a7e]/40 hover:text-[#6a7a5e] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-4 py-2 text-sm rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 text-gray-500 hover:bg-white hover:border-[#8a9a7e]/40 hover:text-[#6a7a5e] transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <span className="mr-1">{action.icon}</span>
                   {action.label}

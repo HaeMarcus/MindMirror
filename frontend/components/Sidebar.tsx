@@ -76,20 +76,20 @@ export default function Sidebar({
           </div>
 
           {/* User capsule badge */}
-          <div className="px-4 pt-4 pb-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/60 backdrop-blur-sm border border-[#d4ddd0] hover:bg-white/80 hover:shadow-sm transition-all duration-200">
-              <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#8a9a7e] to-[#6a7a5e] flex items-center justify-center text-white text-[10px] font-semibold shadow-sm">
+          <div className="px-3 pt-3 pb-4">
+            <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-white/50 backdrop-blur-sm border border-[#d4ddd0]/60 hover:bg-white/70 hover:shadow-sm transition-all duration-200">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#8a9a7e] to-[#6a7a5e] flex items-center justify-center text-white text-xs font-semibold shadow-sm">
                 {nickname.charAt(0).toUpperCase()}
               </div>
-              <span className="text-xs text-gray-600 font-medium truncate max-w-[120px]">{nickname}</span>
+              <span className="text-sm text-gray-700 font-medium truncate">{nickname}</span>
             </div>
           </div>
 
           {/* Data management section */}
           <div className="px-3 pb-2">
-            <div className="flex items-center gap-2 px-1 mb-2">
-              <div className="w-[3px] h-3.5 rounded-full bg-[#8a9a7e]" />
-              <span className="text-xs font-semibold text-gray-600 tracking-wide">数据管理</span>
+            <div className="flex items-center gap-2 px-1 mb-2.5 pt-1">
+              <div className="w-[3px] h-4 rounded-full bg-[#8a9a7e]" />
+              <span className="text-sm font-bold text-gray-700">数据管理</span>
             </div>
             <div className="space-y-0.5">
               <button
@@ -129,9 +129,9 @@ export default function Sidebar({
 
           {/* Big Five Radar Chart */}
           <div className="px-3 pt-3 flex-1">
-            <div className="flex items-center gap-2 px-1 mb-1">
-              <div className="w-[3px] h-3.5 rounded-full bg-[#f97316]" />
-              <span className="text-xs font-semibold text-gray-600 tracking-wide">大五人格画像</span>
+            <div className="flex items-center gap-2 px-1 mb-2 pt-1">
+              <div className="w-[3px] h-4 rounded-full bg-[#f97316]" />
+              <span className="text-sm font-bold text-gray-700">大五人格画像</span>
             </div>
             <RadarChart data={bigFive} />
           </div>
