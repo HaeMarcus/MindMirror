@@ -94,7 +94,7 @@ export default function Sidebar({
               onMouseEnter={() => setShowTooltip(true)}
               onMouseLeave={() => setShowTooltip(false)}
             >
-              <span className="text-sm text-gray-700 font-medium truncate">
+              <span className="text-sm text-gray-700 font-medium truncate w-full text-center">
                 你好，{nickname} 👋
               </span>
               {/* Tooltip */}

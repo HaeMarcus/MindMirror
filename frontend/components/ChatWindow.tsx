@@ -276,8 +276,8 @@ export default function ChatWindow() {
                   {streamingContent ? (
                     <MessageBubble role="assistant" content={streamingContent} isStreaming />
                   ) : (
-                    <div className="flex justify-start mb-4 items-start gap-2">
-                      <img src="/claude-icon.svg" alt="Claude" className="w-6 h-6 flex-shrink-0 mt-1" />
+                    <div className="flex justify-start mb-4 items-start gap-3">
+                      <img src="/claude-icon.svg" alt="Claude" className="w-8 h-8 flex-shrink-0 mt-1" />
                       <div className="bg-white/80 backdrop-blur-sm border border-gray-200/60 rounded-2xl px-4 py-3 shadow-sm">
                         <div className="flex items-center gap-2">
                           <div className="flex gap-1">

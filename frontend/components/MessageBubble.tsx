@@ -65,7 +65,7 @@ function ClaudeAvatar() {
     <img
       src="/claude-icon.svg"
       alt="Claude"
-      className="w-6 h-6 flex-shrink-0 mt-1"
+      className="w-8 h-8 flex-shrink-0 mt-1"
     />
   );
 }
@@ -129,7 +129,7 @@ export default function MessageBubble({ role, content, isStreaming, feedbackGive
   if (sections.length >= 1) {
     return (
       <div className="mb-4">
-        <div className="flex justify-start items-start gap-2">
+        <div className="flex justify-start items-start gap-3">
           <ClaudeAvatar />
           <div className="max-w-[92%] lg:max-w-[88%]">
             {preamble && (
