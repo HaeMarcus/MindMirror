@@ -10,9 +10,9 @@
 
 <p align="center">
   <a href="#-项目简介">项目简介</a> •
-  <a href="#-产品设计思路">产品设计思路</a> •
+  <a href="#-产品设计">产品设计</a> •
   <a href="#-核心功能">核心功能</a> •
-  <a href="#%EF%B8%8F-架构设计与技术选型">架构设计</a> •
+  <a href="#%EF%B8%8F-技术实现">技术实现</a> •
   <a href="#-快速开始">快速开始</a>
 </p>
 
@@ -20,7 +20,7 @@
 
 ## 📖 项目简介
 
-我是 Marcus，一名试图通过数据打量生活的数字产品爱好者。长期以来，我的灵感散落在 Flomo，总结沉淀在 Obsidian，消费欲膨胀在记账软件里。这些跨平台的数字足迹构成了我最真实的"数字镜像"。
+Hi，我是 Marcus，一名数字产品爱好者。长期以来，我利用各种软件记录生活的方方面面。我日常的灵感散落在 Flomo，复盘反思沉淀在 Obsidian，消费记录则留在记账软件里。这些跨平台的数字足迹构成了我最真实的"数字镜像"。
 
 前段时间，我回看这些跨平台的数据，却发现它们彼此割裂。于是脑海中忽然闪出一个念头——**如果把这些数据整合起来交给 AI，它会怎么看我？当 AI 作为一个第三方观察者，通过这些多维数据重新解析我，它能打破我自我认知的"信息茧房"吗？**
 
@@ -28,15 +28,12 @@
 
 于是我决定自己动手，开启了一场 Vibe Coding 之旅：从写下第一行 PRD 开始，到前后端实现、RAG 配置调优、记忆模块设计、Prompt 工程... 直到部署上线。我给它起名 MindMirror，寓意"思维之镜"。
 
-<table><tr>
-<td>🌐 <strong>直接试试：</strong> <a href="https://mind-mirror-liart.vercel.app/">mind-mirror-liart.vercel.app</a></td>
-<td align="right">📄 <strong>产品需求文档：</strong> <a href="https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb">PRD</a></td>
-</tr></table>
+<p>🌐 <strong>直接试试：</strong> <a href="https://mind-mirror-liart.vercel.app/">mind-mirror-liart.vercel.app</a><span>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;</span>📄 <strong>产品需求文档：</strong> <a href="https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb">PRD</a></p>
 
 
-## 🎯 产品设计思路
+## 🎯 产品设计
 
-### 从用户痛点到产品定义
+### 用户痛点
 
 在调研和自身体验中，我发现了三个核心矛盾：
 
@@ -55,9 +52,9 @@
 
 | 数据类型 | 格式 | 捕捉维度 |
 |---------|------|---------|
-| 日常记录 | Flomo `.html` 导出 | 碎片化想法、情绪状态 |
+| 日常记录 | Flomo `.html` | 碎片化想法、情绪状态 |
 | 个人复盘 | Markdown `.md` | 自我认知、目标规划 |
-| 财务账单 | 钱迹 `.csv` 导出 | 真实行为、消费偏好 |
+| 财务账单 | 账单 `.csv` | 真实行为、消费偏好 |
 
 你嘴上说想学习，账单说你在消费娱乐，复盘说你在焦虑——这三条线索交织在一起，比任何单一数据源都更接近真相。
 
@@ -189,7 +186,7 @@ MindMirror/
 
 ## 📄 License
 
-本项目基于 [MIT License](LICENSE) 开源，你可以自由使用、修改和分发。如果这个项目对你有帮助，欢迎 Star 支持。
+本项目基于 [MIT License](LICENSE) 开源。如果这个项目对你有帮助，欢迎 Star 支持。
 
 ---
 

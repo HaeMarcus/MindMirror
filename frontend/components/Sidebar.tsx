@@ -8,6 +8,7 @@ interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   nickname: string;
+  messageCount: number;
   onOpenUpload: () => void;
   onOpenData: () => void;
   onReset: () => void;
@@ -25,6 +26,7 @@ export default function Sidebar({
   isOpen,
   onToggle,
   nickname,
+  messageCount,
   onOpenUpload,
   onOpenData,
   onReset,
@@ -32,17 +34,22 @@ export default function Sidebar({
   const [bigFive, setBigFive] = useState<BigFive | null>(null);
   const [companionDays, setCompanionDays] = useState<number | null>(null);
 
-  // Load profile when sidebar opens
+  // Load profile when sidebar opens or after new messages
   useEffect(() => {
     if (!isOpen || !nickname) return;
-    getProfile(nickname)
-      .then((data) => {
-        if (data.profile.big_five) setBigFive(data.profile.big_five);
-        const days = getDaysAgo(data.created_at);
-        setCompanionDays(days);
-      })
-      .catch(() => {});
-  }, [isOpen, nickname]);
+    // Delay fetch after messages change to allow backend profile generation to complete
+    const delay = messageCount > 0 ? 4000 : 0;
+    const timer = setTimeout(() => {
+      getProfile(nickname)
+        .then((data) => {
+          if (data.profile.big_five) setBigFive(data.profile.big_five);
+          const days = getDaysAgo(data.created_at);
+          setCompanionDays(days);
+        })
+        .catch(() => {});
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [isOpen, nickname, messageCount]);
 
   return (
     <>

@@ -217,6 +217,7 @@ export default function ChatWindow() {
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           nickname={nickname}
+          messageCount={messages.length}
           onOpenUpload={() => setShowUpload(true)}
           onOpenData={() => setShowData(true)}
           onReset={handleReset}
