@@ -18,9 +18,9 @@ EMBEDDING_DIM = 512
 
 FAISS_TOP_K = 12
 MAX_CONTEXT_TOKENS = 2000
-SHORT_MEMORY_ROUNDS = 6           # recent conversation rounds sent to LLM
+SHORT_MEMORY_ROUNDS = 3           # recent conversation rounds sent to LLM
 ROLLING_SUMMARY_INTERVAL = 5      # update rolling summary every N rounds
-PROFILE_UPDATE_INTERVAL = 5       # update user profile every N rounds
+PROFILE_UPDATE_INTERVAL = 10      # update user profile every N rounds
 ROLLING_SUMMARY_MAX_CHARS = 500   # rolling summary length target
 
 APP_VERSION = os.getenv("APP_VERSION", "0.2.0")  # track which version generated each response

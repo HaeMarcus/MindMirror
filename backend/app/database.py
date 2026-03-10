@@ -370,6 +370,7 @@ def clear_all_data(user_id: str):
         db.execute("DELETE FROM messages WHERE user_id = ?", (user_id,))
         db.execute("DELETE FROM memory WHERE user_id = ?", (user_id,))
         db.execute("DELETE FROM feedback WHERE message_id NOT IN (SELECT id FROM messages)")
+        db.execute("DELETE FROM users WHERE nickname = ?", (user_id,))
 
     # Clean up user's FAISS index (outside DB transaction)
     delete_user_index(user_id)

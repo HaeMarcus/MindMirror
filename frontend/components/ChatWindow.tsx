@@ -185,10 +185,13 @@ export default function ChatWindow() {
 
   const handleReset = async () => {
     if (!nickname) return;
-    if (!confirm("确定要清除所有数据吗？（对话历史、上传的文件、记忆都会被删除）")) return;
+    if (!confirm("确定要清空所有数据并退出当前用户吗？（对话历史、上传的文件、记忆、用户记录都会被删除）")) return;
     try {
       await resetAll(nickname);
+      localStorage.removeItem("mm_nickname");
+      setNickname(null);
       setMessages([]);
+      setShowNicknamePrompt(true);
     } catch {
       alert("清除失败，请稍后重试");
     }
