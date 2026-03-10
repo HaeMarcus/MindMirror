@@ -1,4 +1,5 @@
 import json
+import threading
 
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
@@ -93,26 +94,36 @@ async def chat(req: ChatRequest):
 
             # Signal end with message_id and source_types for feedback tracking
             used_sources = ",".join(sorted({s["source_type"] for s in source_context.get("sources", [])}))
+
+            # 6. Kick off memory updates in a background thread BEFORE yielding done,
+            #    so they run even if the client closes the SSE connection after done.
+            def _background_memory_update():
+                try:
+                    if should_update_summary(user_id=user_id):
+                        recent = get_recent_messages(limit=20, user_id=user_id)
+                        old_summary = get_rolling_summary(user_id=user_id)
+                        new_summary = generate_rolling_summary(recent, old_summary)
+                        save_rolling_summary(new_summary, user_id=user_id)
+                        mark_summary_updated(user_id=user_id)
+                        print(f"[memory] Rolling summary updated for {user_id}")
+
+                    if should_update_profile(user_id=user_id):
+                        summary = get_rolling_summary(user_id=user_id)
+                        if not summary:
+                            recent = get_recent_messages(limit=4, user_id=user_id)
+                            summary = "\n".join(f"{m['role']}: {m['content'][:300]}" for m in recent)
+                        if summary:
+                            new_profile = update_user_profile(get_user_profile(user_id=user_id), summary)
+                            save_user_profile(new_profile, user_id=user_id)
+                            print(f"[memory] Profile updated for {user_id}, big_five: {'big_five' in new_profile}")
+                        mark_profile_updated(user_id=user_id)
+                except Exception as e:
+                    print(f"[memory] Error updating memory for {user_id}: {e}")
+                    traceback.print_exc()
+
+            threading.Thread(target=_background_memory_update, daemon=True).start()
+
             yield f"event: done\ndata: {json.dumps({'message_id': msg_id, 'source_types': used_sources})}\n\n"
-
-            # 6. Trigger memory updates (counter-based, independent triggers)
-            if should_update_summary(user_id=user_id):
-                recent = get_recent_messages(limit=20, user_id=user_id)
-                old_summary = get_rolling_summary(user_id=user_id)
-                new_summary = generate_rolling_summary(recent, old_summary)
-                save_rolling_summary(new_summary, user_id=user_id)
-                mark_summary_updated(user_id=user_id)
-
-            if should_update_profile(user_id=user_id):
-                summary = get_rolling_summary(user_id=user_id)
-                if not summary:
-                    # Fallback for first round: use recent messages as summary
-                    recent = get_recent_messages(limit=4, user_id=user_id)
-                    summary = "\n".join(f"{m['role']}: {m['content'][:300]}" for m in recent)
-                if summary:
-                    new_profile = update_user_profile(get_user_profile(user_id=user_id), summary)
-                    save_user_profile(new_profile, user_id=user_id)
-                mark_profile_updated(user_id=user_id)
 
         except Exception as e:
             traceback.print_exc()

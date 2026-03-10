@@ -37,9 +37,8 @@ export default function Sidebar({
   // Load profile when sidebar opens or after new messages
   useEffect(() => {
     if (!isOpen || !nickname) return;
-    // Delay fetch after messages change to allow backend profile generation to complete
-    const delay = messageCount > 0 ? 4000 : 0;
-    const timer = setTimeout(() => {
+
+    const fetchProfile = () => {
       getProfile(nickname)
         .then((data) => {
           if (data.profile.big_five) setBigFive(data.profile.big_five);
@@ -47,8 +46,20 @@ export default function Sidebar({
           setCompanionDays(days);
         })
         .catch(() => {});
-    }, delay);
-    return () => clearTimeout(timer);
+    };
+
+    if (messageCount === 0) {
+      fetchProfile();
+      return;
+    }
+
+    // Two attempts: 5s for fast generation, 12s retry for slow LLM calls
+    const timer1 = setTimeout(fetchProfile, 5000);
+    const timer2 = setTimeout(fetchProfile, 12000);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
   }, [isOpen, nickname, messageCount]);
 
   return (
