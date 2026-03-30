@@ -168,7 +168,7 @@ export default function Sidebar({
               <div className="w-[3px] h-4 rounded-full bg-[#f97316]" />
               <span className="text-sm font-bold text-gray-700">大五人格画像</span>
             </div>
-            <RadarChart data={bigFive} isGenerating={!bigFive && isStreaming} />
+            <RadarChart data={bigFive} isGenerating={!bigFive && !isStreaming && messageCount > 0} />
           </div>
 
           {/* Feedback guidance */}
