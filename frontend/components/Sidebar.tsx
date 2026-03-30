@@ -9,6 +9,7 @@ interface SidebarProps {
   onToggle: () => void;
   nickname: string;
   messageCount: number;
+  isStreaming?: boolean;
   onOpenUpload: () => void;
   onOpenData: () => void;
   onReset: () => void;
@@ -27,6 +28,7 @@ export default function Sidebar({
   onToggle,
   nickname,
   messageCount,
+  isStreaming,
   onOpenUpload,
   onOpenData,
   onReset,
@@ -166,7 +168,7 @@ export default function Sidebar({
               <div className="w-[3px] h-4 rounded-full bg-[#f97316]" />
               <span className="text-sm font-bold text-gray-700">大五人格画像</span>
             </div>
-            <RadarChart data={bigFive} />
+            <RadarChart data={bigFive} isGenerating={!bigFive && isStreaming} />
           </div>
 
           {/* Feedback guidance */}

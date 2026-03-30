@@ -94,16 +94,19 @@ async def chat(req: ChatRequest):
 
             # Signal end with message_id, source_types, and source evidence for frontend
             used_sources = ",".join(sorted({s["source_type"] for s in source_context.get("sources", [])}))
-            # Build evidence list for frontend hover popups
-            evidence_sources = [
-                {
-                    "source_type": s["source_type"],
-                    "source_name": s.get("source_name", ""),
-                    "time_range": s.get("time_range"),
-                    "snippets": s.get("summary_bullets", []),
-                }
-                for s in source_context.get("sources", [])
-            ]
+            # Build evidence list for frontend — one card per chunk
+            evidence_sources = []
+            for rc in source_context.get("raw_chunks", []):
+                meta = rc.get("metadata", {}) or {}
+                content = rc["content"]
+                if len(content) > 300:
+                    content = content[:300] + "..."
+                evidence_sources.append({
+                    "source_type": meta.get("source_type", "unknown"),
+                    "source_name": meta.get("source_name", ""),
+                    "time_range": meta.get("date") or meta.get("period") or meta.get("time_range"),
+                    "snippet": content,
+                })
 
             # 6. Kick off memory updates in a background thread BEFORE yielding done,
             #    so they run even if the client closes the SSE connection after done.

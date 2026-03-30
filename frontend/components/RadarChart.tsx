@@ -10,6 +10,7 @@ interface BigFive {
 
 interface RadarChartProps {
   data: BigFive | null;
+  isGenerating?: boolean;
 }
 
 const DIMENSIONS = [
@@ -52,8 +53,9 @@ function getGridPoints(level: number): string {
     .join(" ");
 }
 
-export default function RadarChart({ data }: RadarChartProps) {
+export default function RadarChart({ data, isGenerating }: RadarChartProps) {
   if (!data) {
+    const centerText = isGenerating ? "画像生成中，请稍等..." : "开始对话即可生成画像";
     return (
       <div className="flex flex-col items-center">
         <svg viewBox={VIEWBOX} className="w-full max-w-[180px]">
@@ -112,10 +114,10 @@ export default function RadarChart({ data }: RadarChartProps) {
             y={CENTER}
             textAnchor="middle"
             dominantBaseline="central"
-            className="fill-gray-400"
+            className={isGenerating ? "fill-orange-400" : "fill-gray-400"}
             fontSize="7"
           >
-            开始对话即可生成画像
+            {centerText}
           </text>
         </svg>
       </div>
@@ -224,8 +226,8 @@ export default function RadarChart({ data }: RadarChartProps) {
           );
         })}
       </svg>
-      <p className="text-[11px] text-gray-400 mt-1 text-center leading-relaxed">
-        前几轮预测可能不稳定，随着沟通深入会越来越准
+      <p className="text-[10px] text-gray-400 mt-1.5 text-center leading-normal px-2">
+        前期画像可能会有偏差，随着沟通深入会越来越了解你哦
       </p>
     </div>
   );

@@ -219,6 +219,7 @@ export default function ChatWindow() {
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           nickname={nickname}
           messageCount={messages.length}
+          isStreaming={isStreaming}
           onOpenUpload={() => setShowUpload(true)}
           onOpenData={() => setShowData(true)}
           onReset={handleReset}

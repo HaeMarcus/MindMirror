@@ -121,13 +121,9 @@ function SourcePanel({ sources }: { sources: SourceEvidence[] }) {
                     <span className="ml-auto text-gray-400 whitespace-nowrap">{src.time_range}</span>
                   )}
                 </div>
-                <div className="space-y-1">
-                  {src.snippets.map((snippet, si) => (
-                    <p key={si} className="text-gray-600 leading-relaxed pl-2 border-l-2 border-gray-200/80">
-                      {snippet}
-                    </p>
-                  ))}
-                </div>
+                <p className="text-gray-600 leading-relaxed pl-2 border-l-2 border-gray-200/80">
+                  {src.snippet}
+                </p>
               </div>
             );
           })}

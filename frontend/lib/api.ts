@@ -86,7 +86,7 @@ export interface SourceEvidence {
   source_type: "flomo_html" | "review_md" | "ledger_csv";
   source_name: string;
   time_range: string | null;
-  snippets: string[];
+  snippet: string;
 }
 
 export async function sendMessage(
@@ -111,6 +111,7 @@ export async function sendMessage(
 
   const decoder = new TextDecoder();
   let buffer = "";
+  let currentEvent = "";
 
   while (true) {
     const { done, value } = await reader.read();
@@ -120,7 +121,6 @@ export async function sendMessage(
     const lines = buffer.split("\n");
     buffer = lines.pop() || "";
 
-    let currentEvent = "";
     for (const line of lines) {
       if (line.startsWith("event: ")) {
         currentEvent = line.slice(7);
@@ -150,7 +150,11 @@ export async function sendMessage(
           return;
         } else {
           try {
-            onChunk(JSON.parse(data));
+            const parsed = JSON.parse(data);
+            // Defensive: only pass strings to onChunk, skip objects
+            if (typeof parsed === "string") {
+              onChunk(parsed);
+            }
           } catch {
             onChunk(data);
           }

@@ -27,3 +27,6 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# Test data (not for version control)
+测试数据/
