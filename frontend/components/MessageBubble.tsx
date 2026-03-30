@@ -30,10 +30,14 @@ const SECTION_LABELS = [
 
 function stripMarkdown(text: string): string {
   return text
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")  // [text](url) → text
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "")    // ![alt](url) → remove images
     .replace(/\*\*(.*?)\*\*/g, "$1")
     .replace(/\*(.*?)\*/g, "$1")
     .replace(/^#{1,6}\s+/gm, "")
-    .replace(/^[-*]\s+/gm, "");
+    .replace(/^[-*]\s+/gm, "")
+    .replace(/^>\s+/gm, "")                    // blockquotes
+    .replace(/`([^`]+)`/g, "$1");               // inline code
 }
 
 function parseInsightSections(content: string) {
@@ -107,7 +111,7 @@ function SourcePanel({ sources }: { sources: SourceEvidence[] }) {
             const meta = SOURCE_TYPE_LABELS[src.source_type] || { icon: "📄", label: src.source_type };
             const isCSV = src.source_type === "ledger_csv";
             return (
-              <div key={idx} className="rounded-lg bg-white/70 border border-gray-200/60 px-3 py-2.5 text-xs">
+              <div key={idx} className="rounded-lg bg-white/70 border border-gray-200/60 px-3 py-2.5 text-xs overflow-hidden">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <span>{meta.icon}</span>
                   <span className="font-medium text-gray-700">
@@ -121,8 +125,8 @@ function SourcePanel({ sources }: { sources: SourceEvidence[] }) {
                     <span className="ml-auto text-gray-400 whitespace-nowrap">{src.time_range}</span>
                   )}
                 </div>
-                <p className="text-gray-600 leading-relaxed pl-2 border-l-2 border-gray-200/80">
-                  {src.snippet}
+                <p className="text-gray-600 leading-relaxed pl-2 border-l-2 border-gray-200/80 [overflow-wrap:anywhere]">
+                  {stripMarkdown(src.snippet)}
                 </p>
               </div>
             );
