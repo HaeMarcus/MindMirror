@@ -6,7 +6,7 @@ import Sidebar from "./Sidebar";
 import UploadPanel from "./UploadPanel";
 import DataPanel from "./DataPanel";
 import NicknamePrompt from "./NicknamePrompt";
-import { sendMessage, getMessages, resetAll, submitFeedback } from "@/lib/api";
+import { sendMessage, getMessages, resetAll, submitFeedback, type SourceEvidence } from "@/lib/api";
 
 interface Message {
   role: "user" | "assistant";
@@ -14,6 +14,7 @@ interface Message {
   messageId?: number | null;
   feedbackGiven?: "accurate" | "inaccurate" | null;
   sourceTypes?: string;
+  sources?: SourceEvidence[];
   timestamp?: string;
 }
 
@@ -146,11 +147,11 @@ export default function ChatWindow() {
           setStreamingContent(streamBuffer.current);
           setStatusText("");
         },
-        (messageId, sourceTypes) => {
+        (messageId, sourceTypes, sources) => {
           const fullContent = streamBuffer.current;
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: fullContent, messageId, feedbackGiven: null, sourceTypes, timestamp: new Date().toISOString() },
+            { role: "assistant", content: fullContent, messageId, feedbackGiven: null, sourceTypes, sources, timestamp: new Date().toISOString() },
           ]);
           setIsStreaming(false);
           setStatusText("");
@@ -295,6 +296,7 @@ export default function ChatWindow() {
                     content={msg.content}
                     timestamp={msg.timestamp}
                     feedbackGiven={msg.feedbackGiven}
+                    sources={msg.sources}
                     onFeedback={msg.role === "assistant" && msg.messageId ? (rating) => handleFeedback(i, rating) : undefined}
                   />
                 </div>

@@ -92,8 +92,18 @@ async def chat(req: ChatRequest):
             assistant_text = "".join(full_response)
             msg_id = add_message("assistant", assistant_text, user_id=user_id)
 
-            # Signal end with message_id and source_types for feedback tracking
+            # Signal end with message_id, source_types, and source evidence for frontend
             used_sources = ",".join(sorted({s["source_type"] for s in source_context.get("sources", [])}))
+            # Build evidence list for frontend hover popups
+            evidence_sources = [
+                {
+                    "source_type": s["source_type"],
+                    "source_name": s.get("source_name", ""),
+                    "time_range": s.get("time_range"),
+                    "snippets": s.get("summary_bullets", []),
+                }
+                for s in source_context.get("sources", [])
+            ]
 
             # 6. Kick off memory updates in a background thread BEFORE yielding done,
             #    so they run even if the client closes the SSE connection after done.
@@ -123,7 +133,7 @@ async def chat(req: ChatRequest):
 
             threading.Thread(target=_background_memory_update, daemon=True).start()
 
-            yield f"event: done\ndata: {json.dumps({'message_id': msg_id, 'source_types': used_sources})}\n\n"
+            yield f"event: done\ndata: {json.dumps({'message_id': msg_id, 'source_types': used_sources, 'sources': evidence_sources}, ensure_ascii=False)}\n\n"
 
         except Exception as e:
             traceback.print_exc()

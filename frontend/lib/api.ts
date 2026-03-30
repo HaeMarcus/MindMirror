@@ -82,11 +82,18 @@ export async function uploadFile(
 
 // ---- Chat ----
 
+export interface SourceEvidence {
+  source_type: "flomo_html" | "review_md" | "ledger_csv";
+  source_name: string;
+  time_range: string | null;
+  snippets: string[];
+}
+
 export async function sendMessage(
   message: string,
   nickname: string,
   onChunk: (text: string) => void,
-  onDone: (messageId: number | null, sourceTypes?: string) => void,
+  onDone: (messageId: number | null, sourceTypes?: string, sources?: SourceEvidence[]) => void,
   onStatus?: (status: string) => void,
 ) {
   const res = await fetch(`${API_BASE}/chat`, {
@@ -133,7 +140,7 @@ export async function sendMessage(
         } else if (currentEvent === "done") {
           try {
             const parsed = JSON.parse(data);
-            onDone(parsed.message_id ?? null, parsed.source_types ?? "");
+            onDone(parsed.message_id ?? null, parsed.source_types ?? "", parsed.sources ?? []);
           } catch {
             onDone(null);
           }

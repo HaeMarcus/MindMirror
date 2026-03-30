@@ -87,6 +87,17 @@ def build_messages(
     return messages
 
 
+def _system_blocks():
+    """Build system prompt with cache_control for Anthropic prompt caching."""
+    return [
+        {
+            "type": "text",
+            "text": SYSTEM_PROMPT,
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
+
+
 def chat_stream(
     question: str,
     short_memory: list[dict],
@@ -100,7 +111,7 @@ def chat_stream(
     with client.messages.stream(
         model=LLM_MODEL,
         max_tokens=2000,
-        system=SYSTEM_PROMPT,
+        system=_system_blocks(),
         messages=messages,
     ) as stream:
         for text in stream.text_stream:
@@ -120,7 +131,7 @@ def chat_sync(
     response = client.messages.create(
         model=LLM_MODEL,
         max_tokens=2000,
-        system=SYSTEM_PROMPT,
+        system=_system_blocks(),
         messages=messages,
     )
     return response.content[0].text
@@ -143,7 +154,8 @@ def generate_rolling_summary(recent_messages: list[dict], old_summary: str) -> s
     response = client.messages.create(
         model=LLM_MODEL,
         max_tokens=600,
-        messages=[{"role": "user", "content": prompt}],
+        system=[{"type": "text", "text": SUMMARY_PROMPT, "cache_control": {"type": "ephemeral"}}],
+        messages=[{"role": "user", "content": f"旧摘要：{old_summary}\n\n最近对话：\n{msgs_text}"}],
     )
     return response.content[0].text
 
@@ -184,12 +196,11 @@ PROFILE_PROMPT = """基于以下对话摘要和证据，更新用户长期画像
 
 def update_user_profile(old_profile: dict, rolling_summary: str) -> dict:
     """Update user profile based on accumulated evidence."""
-    prompt = f"当前画像：{json.dumps(old_profile, ensure_ascii=False)}\n\n对话摘要：{rolling_summary}\n\n{PROFILE_PROMPT}"
-
     response = client.messages.create(
         model=LLM_MODEL,
         max_tokens=800,
-        messages=[{"role": "user", "content": prompt}],
+        system=[{"type": "text", "text": PROFILE_PROMPT, "cache_control": {"type": "ephemeral"}}],
+        messages=[{"role": "user", "content": f"当前画像：{json.dumps(old_profile, ensure_ascii=False)}\n\n对话摘要：{rolling_summary}"}],
     )
 
     text = response.content[0].text.strip()

@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import type { SourceEvidence } from "@/lib/api";
+
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
@@ -7,6 +10,7 @@ interface MessageBubbleProps {
   isStreaming?: boolean;
   timestamp?: string;
   feedbackGiven?: "accurate" | "inaccurate" | null;
+  sources?: SourceEvidence[];
   onFeedback?: (rating: "accurate" | "inaccurate") => void;
 }
 
@@ -69,6 +73,70 @@ function parseInsightSections(content: string) {
   return { sections, preamble };
 }
 
+const SOURCE_TYPE_LABELS: Record<string, { icon: string; label: string }> = {
+  flomo_html: { icon: "📝", label: "日常记录" },
+  review_md: { icon: "📋", label: "复盘文档" },
+  ledger_csv: { icon: "💰", label: "财务摘要" },
+};
+
+function SourcePanel({ sources }: { sources: SourceEvidence[] }) {
+  const [expanded, setExpanded] = useState(false);
+
+  if (!sources || sources.length === 0) return null;
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center gap-1.5 text-xs text-blue-500 hover:text-blue-700 transition-colors duration-200"
+      >
+        <span>📎</span>
+        <span>{expanded ? "收起引用来源" : "查看引用来源"}</span>
+        <svg
+          width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+          className={`transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {expanded && (
+        <div className="mt-2 space-y-2 animate-fade-in">
+          {sources.map((src, idx) => {
+            const meta = SOURCE_TYPE_LABELS[src.source_type] || { icon: "📄", label: src.source_type };
+            const isCSV = src.source_type === "ledger_csv";
+            return (
+              <div key={idx} className="rounded-lg bg-white/70 border border-gray-200/60 px-3 py-2.5 text-xs">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span>{meta.icon}</span>
+                  <span className="font-medium text-gray-700">
+                    {meta.label}
+                    {isCSV ? " · 统计摘要" : " · 原文片段"}
+                  </span>
+                  {src.source_name && (
+                    <span className="text-gray-400 truncate max-w-[120px]">— {src.source_name}</span>
+                  )}
+                  {src.time_range && (
+                    <span className="ml-auto text-gray-400 whitespace-nowrap">{src.time_range}</span>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  {src.snippets.map((snippet, si) => (
+                    <p key={si} className="text-gray-600 leading-relaxed pl-2 border-l-2 border-gray-200/80">
+                      {snippet}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ClaudeAvatar() {
   return (
     <img
@@ -122,7 +190,7 @@ function FeedbackButtons({
   );
 }
 
-export default function MessageBubble({ role, content, isStreaming, timestamp, feedbackGiven, onFeedback }: MessageBubbleProps) {
+export default function MessageBubble({ role, content, isStreaming, timestamp, feedbackGiven, sources, onFeedback }: MessageBubbleProps) {
   const timeStr = formatTime(timestamp);
 
   if (role === "user") {
@@ -163,6 +231,9 @@ export default function MessageBubble({ role, content, isStreaming, timestamp, f
                   <div className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
                     {stripMarkdown(sec.content)}
                   </div>
+                  {sec.label === "证据归因" && sources && sources.length > 0 && (
+                    <SourcePanel sources={sources} />
+                  )}
                 </div>
               ))}
             </div>

@@ -66,16 +66,23 @@ def mark_summary_updated(user_id: str):
     _set_counter(user_id, "_summary_updated_at_round", _get_current_round(user_id))
 
 
+EARLY_PROFILE_ROUNDS = 5  # Update every round during first N rounds for fast convergence
+
 def should_update_profile(user_id: str) -> bool:
     """Check if user profile needs updating.
-    Triggers on first round (bootstrap) or every PROFILE_UPDATE_INTERVAL rounds.
+    Progressive strategy: update every round for the first 5 rounds (fast convergence),
+    then every ROLLING_SUMMARY_INTERVAL rounds (aligned with summary updates).
     """
     current_round = _get_current_round(user_id)
     last_updated = _get_counter(user_id, "_profile_updated_at_round")
     # First round bootstrap: generate initial profile immediately
     if current_round >= 1 and last_updated == 0:
         return True
-    return current_round - last_updated >= PROFILE_UPDATE_INTERVAL
+    # Early rounds: update every round for fast Big Five convergence
+    if current_round <= EARLY_PROFILE_ROUNDS:
+        return current_round > last_updated
+    # After early phase: update every ROLLING_SUMMARY_INTERVAL rounds (=5)
+    return current_round - last_updated >= ROLLING_SUMMARY_INTERVAL
 
 
 def mark_profile_updated(user_id: str):

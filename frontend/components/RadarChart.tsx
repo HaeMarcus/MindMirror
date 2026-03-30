@@ -115,7 +115,7 @@ export default function RadarChart({ data }: RadarChartProps) {
             className="fill-gray-400"
             fontSize="7"
           >
-            等待首次对话...
+            开始对话即可生成画像
           </text>
         </svg>
       </div>
@@ -224,8 +224,8 @@ export default function RadarChart({ data }: RadarChartProps) {
           );
         })}
       </svg>
-      <p className="text-[11px] text-gray-400 mt-1 text-center">
-        人格数据会随对话持续更新
+      <p className="text-[11px] text-gray-400 mt-1 text-center leading-relaxed">
+        前几轮预测可能不稳定，随着沟通深入会越来越准
       </p>
     </div>
   );
