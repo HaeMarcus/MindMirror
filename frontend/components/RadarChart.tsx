@@ -226,8 +226,8 @@ export default function RadarChart({ data, isGenerating }: RadarChartProps) {
           );
         })}
       </svg>
-      <p className="text-[10px] text-gray-400 mt-1.5 text-center leading-normal px-2">
-        前期画像可能会有偏差<br />随着沟通深入会越来越了解你哦
+      <p className="text-[11px] text-gray-400 mt-1.5 text-center leading-normal px-2">
+        前期画像可能会有偏差<br />随着沟通深入会越来越了解你
       </p>
     </div>
   );
