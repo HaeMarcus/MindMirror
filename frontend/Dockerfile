@@ -9,7 +9,7 @@ RUN npm config set registry https://registry.npmmirror.com \
 # Install dependencies using China mirror
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm config set registry https://registry.npmmirror.com \
-    && pnpm install --frozen-lockfile
+    && pnpm install --frozen-lockfile --config.allowed-build-scripts=sharp
 
 # Copy source and build
 COPY . .
