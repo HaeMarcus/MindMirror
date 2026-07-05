@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mindmirror-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATA_DIR=/app/data
+      - CORS_ORIGIN=${CORS_ORIGIN:-}
+    volumes:
+      - backend_data:/app/data
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - app_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - BACKEND_URL=http://backend:8000
+    container_name: mindmirror-frontend
+    restart: unless-stopped
+    environment:
+      - BACKEND_URL=http://backend:8000
+    expose:
+      - "3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: mindmirror-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - app_net
+
+volumes:
+  backend_data:
+
+networks:
+  app_net:
+    driver: bridge
