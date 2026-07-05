@@ -26,6 +26,10 @@ jobs:
             git config --global --add safe.directory /opt/mindmirror
             cd /opt/mindmirror
 
+            echo ">> Resetting local changes..."
+            git checkout -- .
+            git clean -fd
+
             echo ">> Pulling latest code..."
             git pull origin main
 
