@@ -32,6 +32,7 @@ jobs:
             git clean -fd
 
             echo ">> Pulling latest code (with retry)..."
+            export GIT_SSL_NO_VERIFY=1
             for i in 1 2 3; do
               git pull origin main && break
               echo "   Retry $i: git pull failed, waiting 5s..."
