@@ -2,7 +2,7 @@
   <img src="https://em-content.zobj.net/source/apple/391/mirror_1fa9e.png" width="80" />
 </p>
 
-<h1 align="center">MindMirror</h1>
+<h1 align="center">MindMirror 🪞</h1>
 
 <p align="center">
   <strong>基于多源数据的 AI 自我觉察助手</strong>
