@@ -190,5 +190,5 @@ MindMirror/
 
 <p align="center">
   用数据理解自己，比你想象的更有趣。<br/>
-  <sub>Built with Claude</sub>
+  <sub>Built with Claude · Deployed on Tencent Cloud</sub>
 </p>
