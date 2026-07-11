@@ -87,7 +87,7 @@ jobs:
 
             echo ">> Building with Docker layer cache..."
             docker compose build
-            docker compose up -d --remove-orphans
+            docker compose up -d --remove-orphans --wait --wait-timeout 180
 
             echo ">> Waiting for the public health endpoint..."
             healthy=0
