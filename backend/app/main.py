@@ -31,7 +31,7 @@ app.include_router(chat.router, prefix="/api")
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     traceback.print_exc()
-    return JSONResponse(status_code=500, content={"detail": str(exc)})
+    return JSONResponse(status_code=500, content={"detail": "服务器内部错误"})
 
 
 @app.on_event("startup")

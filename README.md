@@ -156,7 +156,9 @@ pnpm dev
 
 打开 `http://localhost:3000`，输入昵称，上传数据，开始对话。
 
-> 项目已适配 Vercel（前端）+ Railway（后端）的云端部署方案。
+> 当前线上环境采用腾讯云 Docker Compose 部署，同时保留 Vercel（前端）+ Railway（后端）的适配配置。
+
+腾讯云 Docker Compose 与 GitHub Actions 自动发布说明见 [DEPLOYMENT.md](DEPLOYMENT.md)。
 
 
 ## 📁 项目结构
