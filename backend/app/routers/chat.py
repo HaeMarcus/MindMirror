@@ -21,6 +21,10 @@ from app.database import (
 from app.llm import chat_stream, generate_rolling_summary, update_user_profile
 from app.config import APP_VERSION
 from app.demo_content import demo_fallback
+from app.profile_precompute import (
+    activate_precomputed_profile,
+    start_scheduled_precompute_now,
+)
 
 router = APIRouter()
 
@@ -84,6 +88,7 @@ async def chat(req: ChatRequest):
             # 1. RAG retrieval
             yield "event: status\ndata: 正在检索相关数据...\n\n"
             source_context = retrieve(question, user_id=user_id)
+            profile_event = start_scheduled_precompute_now(user_id=user_id)
 
             # 2. Gather memory
             short_memory = get_short_memory(user_id=user_id)
@@ -104,6 +109,17 @@ async def chat(req: ChatRequest):
             # 5. Save assistant response
             assistant_text = "".join(full_response)
             msg_id = add_message("assistant", assistant_text, user_id=user_id)
+
+            # Uploaded data is analyzed in parallel with the answer, but the
+            # initial radar remains hidden until this first answer is complete.
+            profile_managed_by_precompute = False
+            if profile_event is not None:
+                if not profile_event.is_set():
+                    yield "event: status\ndata: 正在完成初步人格画像...\n\n"
+                profile_managed_by_precompute = activate_precomputed_profile(
+                    user_id=user_id,
+                    event=profile_event,
+                ) or not profile_event.is_set()
 
             # Signal end with message_id, source_types, and source evidence for frontend
             used_sources = ",".join(sorted({s["source_type"] for s in source_context.get("sources", [])}))
@@ -133,7 +149,7 @@ async def chat(req: ChatRequest):
                         mark_summary_updated(user_id=user_id)
                         print(f"[memory] Rolling summary updated for {user_id}")
 
-                    if should_update_profile(user_id=user_id):
+                    if should_update_profile(user_id=user_id) and not profile_managed_by_precompute:
                         summary = get_rolling_summary(user_id=user_id)
                         if not summary:
                             recent = get_recent_messages(limit=4, user_id=user_id)
@@ -142,6 +158,10 @@ async def chat(req: ChatRequest):
                             new_profile = update_user_profile(get_user_profile(user_id=user_id), summary)
                             save_user_profile(new_profile, user_id=user_id)
                             print(f"[memory] Profile updated for {user_id}, big_five: {'big_five' in new_profile}")
+                        mark_profile_updated(user_id=user_id)
+                    elif profile_managed_by_precompute:
+                        # The uploaded-data profile is round one's initial
+                        # profile. Round two will perform the first small update.
                         mark_profile_updated(user_id=user_id)
                 except Exception as e:
                     print(f"[memory] Error updating memory for {user_id}: {e}")

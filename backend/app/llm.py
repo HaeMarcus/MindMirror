@@ -4,6 +4,7 @@ from typing import Generator
 import anthropic
 
 from app.config import ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, LLM_MODEL
+from app.profile_scores import stabilize_profile_scores
 
 _client_kwargs = {"api_key": ANTHROPIC_API_KEY}
 if ANTHROPIC_BASE_URL:
@@ -174,9 +175,10 @@ PROFILE_PROMPT = """基于以下对话摘要和证据，更新用户长期画像
 - 基于用户对话中展现的行为模式、情绪表达、价值取向、社交风格综合评估
 - 每个维度 0-100 分，代表该特质的强度（50 为平均水平）
 - 五个维度：openness（开放性）、conscientiousness（尽责性）、extraversion（外向性）、agreeableness（宜人性）、neuroticism（神经质）
-- 重要：评分要有细粒度区分，避免大量维度都给整数50。即使初期证据有限，也应基于已有线索给出有区分度的分数（如52、47、58），体现初步判断的倾向性
-- 如果对话数据不足以精确判断某个维度，基于有限线索给出略偏离50的倾向性分数；仅在完全没有任何依据时才设为50
-- 每轮更新时，分数变化应体现新证据的影响，允许2-8分的合理波动，避免长期停滞在同一数值
+- 初始画像应有明确的相对差异，不要把五个维度都挤在45-60分；当证据覆盖多个来源时，最高分和最低分通常应至少相差20分
+- 初始判断可以鲜明但必须能从证据中解释，不要为了显得谨慎而把所有分数拉回50附近
+- 如果完全没有依据才使用50；只要有稳定倾向，就给出能体现方向和强弱的分数
+- 更新已有画像时保持稳定：有新证据支持的维度通常变化2-6分，无新证据的维度可以不变，禁止单轮大幅跳变
 
 输出纯 JSON，格式：
 {
@@ -196,6 +198,20 @@ PROFILE_PROMPT = """基于以下对话摘要和证据，更新用户长期画像
 }"""
 
 
+def _parse_profile_response(text: str, fallback: dict) -> dict:
+    """Parse a profile JSON response and apply score guardrails."""
+    text = text.strip()
+    if "```json" in text:
+        text = text.split("```json")[1].split("```")[0]
+    elif "```" in text:
+        text = text.split("```")[1].split("```")[0]
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return fallback
+
+
 def update_user_profile(old_profile: dict, rolling_summary: str) -> dict:
     """Update user profile based on accumulated evidence."""
     response = client.messages.create(
@@ -205,14 +221,26 @@ def update_user_profile(old_profile: dict, rolling_summary: str) -> dict:
         messages=[{"role": "user", "content": f"当前画像：{json.dumps(old_profile, ensure_ascii=False)}\n\n对话摘要：{rolling_summary}"}],
     )
 
-    text = response.content[0].text.strip()
-    # Extract JSON from response
-    if "```json" in text:
-        text = text.split("```json")[1].split("```")[0]
-    elif "```" in text:
-        text = text.split("```")[1].split("```")[0]
+    parsed = _parse_profile_response(response.content[0].text, old_profile)
+    return stabilize_profile_scores(parsed, old_profile or None)
 
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        return old_profile
+
+def generate_profile_from_evidence(evidence: str, old_profile: dict | None = None) -> dict:
+    """Precompute a hidden profile from uploaded evidence before the first chat."""
+    current = old_profile or {}
+    response = client.messages.create(
+        model=LLM_MODEL,
+        max_tokens=900,
+        system=[{"type": "text", "text": PROFILE_PROMPT, "cache_control": {"type": "ephemeral"}}],
+        messages=[{
+            "role": "user",
+            "content": (
+                f"当前画像：{json.dumps(current, ensure_ascii=False)}\n\n"
+                "以下是用户主动上传的数据证据。请生成一份可在首次完整回答后展示的初步画像。"
+                "优先识别跨来源重复出现的稳定行为，不要把单条记录过度人格化。\n\n"
+                f"上传数据证据：\n{evidence}"
+            ),
+        }],
+    )
+    parsed = _parse_profile_response(response.content[0].text, current)
+    return stabilize_profile_scores(parsed, current or None)

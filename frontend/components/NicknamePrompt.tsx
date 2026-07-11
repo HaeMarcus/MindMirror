@@ -105,7 +105,7 @@ export default function NicknamePrompt({ onConfirm }: NicknamePromptProps) {
           {loading === "demo" ? "正在准备虚构示例数据..." : "直接体验虚构示例人物"}
         </button>
         <p className="mt-2 text-[11px] leading-relaxed text-gray-400">
-          示例人物“许遥”及其日记、复盘和账单均为原创虚构内容，与任何真人无关
+          示例人物“许遥”及其日记、复盘和账单均为虚构内容
         </p>
       </div>
     </div>

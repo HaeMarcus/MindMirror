@@ -1,6 +1,6 @@
 """Curated fictional content used only by the isolated demo experience."""
 
-DEMO_DISPLAY_NAME = "许遥（虚构示例）"
+DEMO_DISPLAY_NAME = "许遥"
 
 DEMO_PROFILE = {
     "key_facts": [

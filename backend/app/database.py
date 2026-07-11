@@ -242,6 +242,30 @@ def get_chunks_by_faiss_ids(faiss_ids: list[int], user_id: str) -> list[dict]:
         return [dict(r) for r in rows]
 
 
+def get_profile_seed_chunks(user_id: str, per_source_limit: int = 8) -> list[dict]:
+    """Return a balanced evidence sample for background profile precomputation."""
+    with get_db() as db:
+        rows = db.execute(
+            """SELECT d.source_type, d.source_name, c.chunk_type, c.content
+               FROM chunks c
+               JOIN documents d ON c.doc_id = d.doc_id
+               WHERE d.user_id = ? AND c.chunk_type != 'ledger_row'
+               ORDER BY d.created_at DESC, c.rowid DESC""",
+            (user_id,),
+        ).fetchall()
+
+    counts: dict[str, int] = {}
+    selected = []
+    for row in rows:
+        item = dict(row)
+        source_type = item["source_type"]
+        if counts.get(source_type, 0) >= per_source_limit:
+            continue
+        counts[source_type] = counts.get(source_type, 0) + 1
+        selected.append(item)
+    return selected
+
+
 # ---- Messages CRUD ----
 
 def add_message(role: str, content: str, user_id: str) -> int:
