@@ -9,7 +9,6 @@ interface SidebarProps {
   onToggle: () => void;
   nickname: string;
   messageCount: number;
-  isStreaming?: boolean;
   onOpenUpload: () => void;
   onOpenData: () => void;
   onReset: () => void;
@@ -28,7 +27,6 @@ export default function Sidebar({
   onToggle,
   nickname,
   messageCount,
-  isStreaming,
   onOpenUpload,
   onOpenData,
   onReset,
@@ -40,9 +38,11 @@ export default function Sidebar({
   useEffect(() => {
     if (!isOpen || !nickname) return;
 
+    let cancelled = false;
     const fetchProfile = () => {
       getProfile(nickname)
         .then((data) => {
+          if (cancelled) return;
           if (data.profile.big_five) setBigFive(data.profile.big_five);
           const days = getDaysAgo(data.created_at);
           setCompanionDays(days);
@@ -50,17 +50,14 @@ export default function Sidebar({
         .catch(() => {});
     };
 
-    if (messageCount === 0) {
-      fetchProfile();
-      return;
-    }
-
-    // Two attempts: 5s for fast generation, 12s retry for slow LLM calls
-    const timer1 = setTimeout(fetchProfile, 5000);
-    const timer2 = setTimeout(fetchProfile, 12000);
+    // Fetch immediately when an answer completes, then keep a short polling
+    // window for the asynchronous profile update that follows.
+    fetchProfile();
+    const delays = messageCount > 0 ? [2500, 6000, 12000, 20000, 30000] : [];
+    const timers = delays.map((delay) => setTimeout(fetchProfile, delay));
     return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
+      cancelled = true;
+      timers.forEach(clearTimeout);
     };
   }, [isOpen, nickname, messageCount]);
 
@@ -172,7 +169,7 @@ export default function Sidebar({
               <div className="w-[3px] h-4 rounded-full bg-[#f97316]" />
               <span className="text-sm font-bold text-gray-700">大五人格画像</span>
             </div>
-            <RadarChart data={bigFive} isGenerating={!bigFive && !isStreaming && messageCount > 0} />
+            <RadarChart data={bigFive} isGenerating={!bigFive && messageCount > 0} />
           </div>
 
           {/* Feedback guidance */}

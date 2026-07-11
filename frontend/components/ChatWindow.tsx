@@ -78,9 +78,12 @@ export default function ChatWindow() {
   useEffect(() => {
     const stored = localStorage.getItem("mm_nickname");
     if (stored) {
+      const storedIsDemo = localStorage.getItem("mm_is_demo") === "true";
+      const storedDisplayName = storedIsDemo ? "许遥" : (localStorage.getItem("mm_display_name") || stored);
       setNickname(stored);
-      setDisplayName(localStorage.getItem("mm_display_name") || stored);
-      setIsDemo(localStorage.getItem("mm_is_demo") === "true");
+      setDisplayName(storedDisplayName);
+      setIsDemo(storedIsDemo);
+      if (storedIsDemo) localStorage.setItem("mm_display_name", "许遥");
     } else {
       setShowNicknamePrompt(true);
     }
@@ -275,7 +278,6 @@ export default function ChatWindow() {
           onToggle={() => setSidebarOpen(!sidebarOpen)}
           nickname={displayName || nickname}
           messageCount={messages.length}
-          isStreaming={isStreaming}
           onOpenUpload={() => setShowUpload(true)}
           onOpenData={() => setShowData(true)}
           onReset={handleReset}
@@ -302,7 +304,7 @@ export default function ChatWindow() {
           )}
           <h1 className="text-base font-bold text-gray-800">MindMirror</h1>
           <span className="hidden sm:inline text-sm text-gray-400 ml-2">基于多维数据的 AI 自我觉察助手</span>
-          <span className="hidden md:inline ml-auto text-sm text-gray-400 font-medium">数据支持随时清除 🔒</span>
+          <span className="hidden md:inline ml-auto text-sm text-gray-400 font-medium">隐私持续守护中 🔒</span>
         </header>
 
         {/* Messages area */}
@@ -316,7 +318,7 @@ export default function ChatWindow() {
                   你好{displayName ? `，${displayName}` : ""}
                 </h2>
                 <p className="text-gray-400 mb-8">
-                  {isDemo ? "以下日记、复盘与账单均为原创虚构数据，可以放心探索" : "导入你的数据，开始一场关于自己的对话"}
+                  {isDemo ? "你正在体验虚构人物“许遥”，可以放心探索她的日记、复盘与账单" : "导入你的数据，开始一场关于自己的对话"}
                 </p>
 
                 {/* Insight cards grid */}

@@ -9,6 +9,7 @@ from app.parsers.csv_parser import parse_ledger_csv
 from app.database import insert_document, insert_chunks, delete_document, get_all_documents, get_chunk_count_by_doc
 from app.embedding import encode_batch, add_vectors
 from app.document_ids import namespace_parsed_result
+from app.profile_precompute import schedule_profile_precompute
 
 router = APIRouter()
 
@@ -77,6 +78,10 @@ async def ingest_file(file: UploadFile = File(...), nickname: str = Form(...)):
 
         insert_document(**doc, user_id=user_id)
         insert_chunks(chunks)
+
+        # Multiple sequential uploads share one delayed profile analysis. If
+        # the user starts chatting first, the chat route starts it immediately.
+        schedule_profile_precompute(user_id=user_id)
 
         yield f"data: {json.dumps({'type': 'done', 'doc_id': doc['doc_id'], 'source_type': doc['source_type'], 'source_name': doc['source_name'], 'chunk_count': store_total, 'embedded_count': embed_total, 'time_range_start': doc.get('time_range_start'), 'time_range_end': doc.get('time_range_end')})}\n\n"
 

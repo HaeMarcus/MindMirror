@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+
 interface BigFive {
   openness: number;
   conscientiousness: number;
@@ -54,6 +56,35 @@ function getGridPoints(level: number): string {
 }
 
 export default function RadarChart({ data, isGenerating }: RadarChartProps) {
+  const previousData = useRef<BigFive | null>(null);
+  const deltaTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [recentDeltas, setRecentDeltas] = useState<{ label: string; delta: number }[]>([]);
+
+  useEffect(() => {
+    if (!data) return;
+    const previous = previousData.current;
+    previousData.current = data;
+    if (!previous) return;
+
+    const changed = DIMENSIONS
+      .map((dimension) => ({
+        label: dimension.label,
+        delta: data[dimension.key] - previous[dimension.key],
+      }))
+      .filter((item) => item.delta !== 0)
+      .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))
+      .slice(0, 3);
+
+    if (changed.length === 0) return;
+    setRecentDeltas(changed);
+    if (deltaTimer.current) clearTimeout(deltaTimer.current);
+    deltaTimer.current = setTimeout(() => setRecentDeltas([]), 8000);
+  }, [data]);
+
+  useEffect(() => () => {
+    if (deltaTimer.current) clearTimeout(deltaTimer.current);
+  }, []);
+
   if (!data) {
     const centerText = isGenerating ? "画像生成中，请稍等..." : "开始对话即可生成画像";
     return (
@@ -160,7 +191,7 @@ export default function RadarChart({ data, isGenerating }: RadarChartProps) {
         })}
 
         {/* Data polygon + points (animated) */}
-        <g className="animate-radar-grow">
+        <g key={values.join("-")} className="animate-radar-grow">
           <polygon
             points={getPoints(values)}
             fill="rgba(249, 115, 22, 0.18)"
@@ -226,6 +257,16 @@ export default function RadarChart({ data, isGenerating }: RadarChartProps) {
           );
         })}
       </svg>
+      {recentDeltas.length > 0 && (
+        <div className="mb-1 flex max-w-[210px] flex-wrap justify-center gap-x-2 gap-y-0.5 text-[10px] font-medium text-orange-500 animate-fade-in">
+          <span>画像已更新</span>
+          {recentDeltas.map((item) => (
+            <span key={item.label}>
+              {item.label} {item.delta > 0 ? "+" : ""}{item.delta}
+            </span>
+          ))}
+        </div>
+      )}
       <p className="text-[11px] text-gray-400 mt-1.5 text-center leading-normal px-2">
         前期画像可能会有偏差<br />随着沟通深入会越来越了解你
       </p>
