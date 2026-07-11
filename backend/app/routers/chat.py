@@ -1,7 +1,9 @@
 import json
+import os
+import secrets
 import threading
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Header, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -20,6 +22,14 @@ from app.llm import chat_stream, generate_rolling_summary, update_user_profile
 from app.config import APP_VERSION
 
 router = APIRouter()
+
+
+def _require_admin_token(x_admin_token: str | None) -> None:
+    """Keep developer-only metrics off the public demo surface."""
+    expected = os.getenv("ADMIN_TOKEN", "")
+    if not expected or not x_admin_token or not secrets.compare_digest(expected, x_admin_token):
+        # A 404 avoids advertising that a private analytics endpoint exists.
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 class ChatRequest(BaseModel):
@@ -172,8 +182,9 @@ async def submit_feedback(req: FeedbackRequest):
 
 
 @router.get("/feedback/stats")
-async def feedback_stats():
+async def feedback_stats(x_admin_token: str | None = Header(default=None)):
     """Get basic feedback statistics."""
+    _require_admin_token(x_admin_token)
     return get_feedback_stats()
 
 
@@ -187,6 +198,10 @@ async def get_profile(nickname: str = Query(...)):
 
 
 @router.get("/analytics")
-async def analytics(days: int = Query(default=30)):
+async def analytics(
+    days: int = Query(default=30, ge=1, le=365),
+    x_admin_token: str | None = Header(default=None),
+):
     """Developer analytics dashboard data."""
+    _require_admin_token(x_admin_token)
     return get_feedback_analytics(days=days)

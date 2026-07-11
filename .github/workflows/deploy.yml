@@ -1,21 +1,77 @@
-name: Deploy to Tencent Cloud
+name: Verify and deploy to Tencent Cloud
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mindmirror-production
+  cancel-in-progress: true
 
 jobs:
-  deploy:
-    name: Deploy via SSH
+  verify:
+    name: Verify application
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.14.0 --activate
+
+      - name: Verify frontend build
+        working-directory: frontend
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Verify backend syntax
+        run: python -m compileall -q backend/app
+
+  deploy:
+    name: Upload and deploy
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Uploading the checked-out source avoids unreliable git pulls from the
+      # mainland server. The .env file and Docker volume stay on the server.
+      - name: Upload application source
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          source: "backend,frontend,nginx,docker-compose.yml"
+          target: /opt/mindmirror
+          overwrite: true
+          command_timeout: 10m
+
+      - name: Build and restart services
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -24,26 +80,32 @@ jobs:
           command_timeout: 20m
           script: |
             set -e
-            git config --global --add safe.directory /opt/mindmirror
             cd /opt/mindmirror
 
-            echo ">> Resetting local changes..."
-            git checkout -- .
-            git clean -fd
+            test -f .env
+            docker compose config --quiet
 
-            echo ">> Pulling latest code (with retry)..."
-            export GIT_SSL_NO_VERIFY=1
-            for i in 1 2 3; do
-              git pull origin main && break
-              echo "   Retry $i: git pull failed, waiting 5s..."
+            echo ">> Building with Docker layer cache..."
+            docker compose build
+            docker compose up -d --remove-orphans --wait --wait-timeout 180
+
+            echo ">> Waiting for the public health endpoint..."
+            healthy=0
+            for attempt in $(seq 1 36); do
+              if curl --fail --silent --show-error http://127.0.0.1/api/health >/dev/null; then
+                healthy=1
+                break
+              fi
               sleep 5
             done
 
-            echo ">> Rebuilding and restarting containers..."
-            docker compose build --no-cache
-            docker compose up -d
+            if [ "$healthy" -ne 1 ]; then
+              echo ">> Health check failed. Recent service status and logs:"
+              docker compose ps
+              docker compose logs --tail=120
+              exit 1
+            fi
 
-            echo ">> Cleaning up old images..."
-            docker image prune -f
-
-            echo ">> Deployment complete."
+            docker compose ps
+            docker image prune -f --filter "until=168h"
+            echo ">> Deployment complete and healthy."
