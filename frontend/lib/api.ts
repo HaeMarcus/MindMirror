@@ -201,8 +201,14 @@ export interface AnalyticsData {
   }[];
 }
 
-export async function getAnalytics(days: number = 30): Promise<AnalyticsData> {
-  const res = await fetch(`${API_BASE}/analytics?days=${days}`);
+export async function getAnalytics(days: number = 30, adminToken: string): Promise<AnalyticsData> {
+  const res = await fetch(`${API_BASE}/analytics?days=${days}`, {
+    headers: { "X-Admin-Token": adminToken },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(res.status === 404 ? "管理令牌无效" : "看板加载失败");
+  }
   return res.json();
 }
 
