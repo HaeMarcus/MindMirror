@@ -51,7 +51,7 @@ export default function DataPanel({ isOpen, onClose, nickname }: DataPanelProps)
               </p>
             )}
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+          <button onClick={onClose} aria-label="关闭当前数据库窗口" className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
         </div>
 
         {loading ? (

@@ -44,7 +44,9 @@ jobs:
           python-version: "3.11"
 
       - name: Verify backend syntax
-        run: python -m compileall -q backend/app
+        run: |
+          python -m compileall -q backend/app backend/tests
+          PYTHONPATH=backend python -m unittest discover -s backend/tests -v
 
   deploy:
     name: Upload and deploy

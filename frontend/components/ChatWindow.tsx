@@ -15,6 +15,7 @@ interface Message {
   feedbackGiven?: "accurate" | "inaccurate" | null;
   sourceTypes?: string;
   sources?: SourceEvidence[];
+  isFallback?: boolean;
   timestamp?: string;
 }
 
@@ -53,6 +54,8 @@ const QUICK_ACTIONS = [
 
 export default function ChatWindow() {
   const [nickname, setNickname] = useState<string | null>(null);
+  const [displayName, setDisplayName] = useState<string | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
   const [showNicknamePrompt, setShowNicknamePrompt] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -66,18 +69,26 @@ export default function ChatWindow() {
   const [streamingContent, setStreamingContent] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const [requestError, setRequestError] = useState<{ message: string; prompt: string } | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const requestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stopReasonRef = useRef<"manual" | "timeout" | null>(null);
 
   // Initialize nickname from localStorage
   useEffect(() => {
     const stored = localStorage.getItem("mm_nickname");
     if (stored) {
       setNickname(stored);
+      setDisplayName(localStorage.getItem("mm_display_name") || stored);
+      setIsDemo(localStorage.getItem("mm_is_demo") === "true");
     } else {
       setShowNicknamePrompt(true);
     }
     // Restore sidebar preference
     const sidebarPref = localStorage.getItem("mm_sidebar");
-    if (sidebarPref === "closed") setSidebarOpen(false);
+    if (sidebarPref === "closed" || (!sidebarPref && window.innerWidth < 768)) {
+      setSidebarOpen(false);
+    }
   }, []);
 
   // Persist sidebar state
@@ -122,21 +133,31 @@ export default function ChatWindow() {
     el.style.height = Math.min(el.scrollHeight, 128) + "px";
   };
 
-  const handleNicknameConfirm = (name: string) => {
+  const handleNicknameConfirm = (name: string, nextDisplayName: string, demo: boolean) => {
     setNickname(name);
+    setDisplayName(nextDisplayName);
+    setIsDemo(demo);
     setShowNicknamePrompt(false);
+    if (window.innerWidth < 768) setSidebarOpen(false);
   };
 
-  const handleSend = async (text?: string) => {
-    const msg = (text || input).trim();
+  const runMessage = async (msg: string, addUserMessage: boolean) => {
     if (!msg || isStreaming || !nickname) return;
 
-    setInput("");
-    if (inputRef.current) { inputRef.current.style.height = "auto"; }
-    setMessages((prev) => [...prev, { role: "user", content: msg, timestamp: new Date().toISOString() }]);
+    setRequestError(null);
+    if (addUserMessage) {
+      setMessages((prev) => [...prev, { role: "user", content: msg, timestamp: new Date().toISOString() }]);
+    }
     setIsStreaming(true);
     setStatusText("正在处理...");
     streamBuffer.current = "";
+    stopReasonRef.current = null;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    requestTimeoutRef.current = setTimeout(() => {
+      stopReasonRef.current = "timeout";
+      controller.abort();
+    }, 90000);
 
     try {
       await sendMessage(
@@ -147,28 +168,59 @@ export default function ChatWindow() {
           setStreamingContent(streamBuffer.current);
           setStatusText("");
         },
-        (messageId, sourceTypes, sources) => {
+        (messageId, sourceTypes, sources, fallback) => {
           const fullContent = streamBuffer.current;
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: fullContent, messageId, feedbackGiven: null, sourceTypes, sources, timestamp: new Date().toISOString() },
+            { role: "assistant", content: fullContent, messageId, feedbackGiven: null, sourceTypes, sources, isFallback: fallback, timestamp: new Date().toISOString() },
           ]);
           setIsStreaming(false);
           setStatusText("");
           setStreamingContent("");
         },
-        (status) => {
-          setStatusText(status);
-        },
+        (status) => setStatusText(status),
+        controller.signal,
       );
-    } catch {
+    } catch (err) {
       setIsStreaming(false);
       setStatusText("");
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "抱歉，请求出错了。请检查后端服务是否正常运行。" },
-      ]);
+      setStreamingContent("");
+      const manuallyStopped = stopReasonRef.current === "manual";
+      if (!manuallyStopped) {
+        const message = stopReasonRef.current === "timeout"
+          ? "分析时间超过 90 秒，可能是模型服务繁忙。你可以直接重试。"
+          : err instanceof Error
+            ? err.message
+            : "连接暂时中断，请稍后重试。";
+        setRequestError({ message, prompt: msg });
+      }
+    } finally {
+      if (requestTimeoutRef.current) clearTimeout(requestTimeoutRef.current);
+      requestTimeoutRef.current = null;
+      abortControllerRef.current = null;
+      stopReasonRef.current = null;
     }
+  };
+
+  const handleSend = async (text?: string) => {
+    const msg = (text || input).trim();
+    if (!msg || isStreaming || !nickname) return;
+
+    setInput("");
+    if (inputRef.current) { inputRef.current.style.height = "auto"; }
+    await runMessage(msg, true);
+  };
+
+  const handleStop = () => {
+    stopReasonRef.current = "manual";
+    abortControllerRef.current?.abort();
+  };
+
+  const handleRetry = () => {
+    if (!requestError || isStreaming) return;
+    const prompt = requestError.prompt;
+    setRequestError(null);
+    runMessage(prompt, false);
   };
 
   const handleFeedback = async (index: number, rating: "accurate" | "inaccurate") => {
@@ -190,7 +242,11 @@ export default function ChatWindow() {
     try {
       await resetAll(nickname);
       localStorage.removeItem("mm_nickname");
+      localStorage.removeItem("mm_display_name");
+      localStorage.removeItem("mm_is_demo");
       setNickname(null);
+      setDisplayName(null);
+      setIsDemo(false);
       setMessages([]);
       setShowNicknamePrompt(true);
     } catch {
@@ -217,7 +273,7 @@ export default function ChatWindow() {
         <Sidebar
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
-          nickname={nickname}
+          nickname={displayName || nickname}
           messageCount={messages.length}
           isStreaming={isStreaming}
           onOpenUpload={() => setShowUpload(true)}
@@ -233,6 +289,7 @@ export default function ChatWindow() {
           {!sidebarOpen && (
             <button
               onClick={() => setSidebarOpen(true)}
+              aria-label="展开侧栏"
               className="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 mr-3 transition-colors"
               title="展开侧栏"
             >
@@ -244,8 +301,8 @@ export default function ChatWindow() {
             </button>
           )}
           <h1 className="text-base font-bold text-gray-800">MindMirror</h1>
-          <span className="text-sm text-gray-400 ml-2">基于多维数据的 AI 自我觉察助手</span>
-          <span className="ml-auto text-sm text-gray-400 font-medium">隐私持续守护中 🔒</span>
+          <span className="hidden sm:inline text-sm text-gray-400 ml-2">基于多维数据的 AI 自我觉察助手</span>
+          <span className="hidden md:inline ml-auto text-sm text-gray-400 font-medium">数据支持随时清除 🔒</span>
         </header>
 
         {/* Messages area */}
@@ -256,10 +313,10 @@ export default function ChatWindow() {
               <div className="max-w-2xl w-full text-center">
                 <div className="text-6xl mb-4 animate-float">🪞</div>
                 <h2 className="text-2xl font-bold text-gray-700 mb-2">
-                  你好{nickname ? `，${nickname}` : ""}
+                  你好{displayName ? `，${displayName}` : ""}
                 </h2>
                 <p className="text-gray-400 mb-8">
-                  导入你的数据，开始一场关于自己的对话
+                  {isDemo ? "以下日记、复盘与账单均为原创虚构数据，可以放心探索" : "导入你的数据，开始一场关于自己的对话"}
                 </p>
 
                 {/* Insight cards grid */}
@@ -298,6 +355,7 @@ export default function ChatWindow() {
                     timestamp={msg.timestamp}
                     feedbackGiven={msg.feedbackGiven}
                     sources={msg.sources}
+                    isFallback={msg.isFallback}
                     onFeedback={msg.role === "assistant" && msg.messageId ? (rating) => handleFeedback(i, rating) : undefined}
                   />
                 </div>
@@ -325,6 +383,17 @@ export default function ChatWindow() {
                   )}
                 </div>
               )}
+              {requestError && !isStreaming && (
+                <div className="ml-11 mt-2 rounded-xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-800">
+                  <p>{requestError.message}</p>
+                  <button
+                    onClick={handleRetry}
+                    className="mt-2 rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-amber-700 shadow-sm hover:bg-amber-100 transition-colors"
+                  >
+                    重新尝试
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -333,6 +402,7 @@ export default function ChatWindow() {
         {showScrollBtn && hasMessages && (
           <button
             onClick={scrollToBottom}
+            aria-label="滚动到最新消息"
             className="absolute bottom-28 right-6 z-10 p-2.5 rounded-full bg-white/90 backdrop-blur-sm border border-gray-200/60 shadow-lg text-gray-500 hover:text-gray-700 hover:shadow-xl transition-all duration-200 animate-scroll-btn"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -348,6 +418,7 @@ export default function ChatWindow() {
               {/* Upload button inside input */}
               <button
                 onClick={() => setShowUpload(true)}
+                aria-label="导入数据"
                 className="flex-shrink-0 p-2.5 ml-1 text-gray-400 hover:text-[#7a8a6e] transition-colors"
                 title="导入数据"
               >
@@ -371,6 +442,7 @@ export default function ChatWindow() {
               {/* Send button */}
               <button
                 onClick={() => handleSend()}
+                aria-label="发送消息"
                 disabled={isStreaming || !input.trim()}
                 className="flex-shrink-0 p-2.5 mr-1 text-white rounded-xl bg-[#8a9a7e] hover:bg-[#7a8a6e] disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 mb-0.5"
               >
@@ -383,6 +455,14 @@ export default function ChatWindow() {
 
             {/* Quick action buttons */}
             <div className="flex gap-2.5 justify-center flex-wrap mt-2.5">
+              {isStreaming && (
+                <button
+                  onClick={handleStop}
+                  className="px-4 py-2 text-sm rounded-full bg-white border border-red-200 text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  停止生成
+                </button>
+              )}
               {QUICK_ACTIONS.map((action) => (
                 <button
                   key={action.label}
