@@ -8,6 +8,7 @@ from app.parsers.md_parser import parse_markdown
 from app.parsers.csv_parser import parse_ledger_csv
 from app.database import insert_document, insert_chunks, delete_document, get_all_documents, get_chunk_count_by_doc
 from app.embedding import encode_batch, add_vectors
+from app.document_ids import namespace_parsed_result
 
 router = APIRouter()
 
@@ -33,6 +34,7 @@ async def ingest_file(file: UploadFile = File(...), nickname: str = Form(...)):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+    result = namespace_parsed_result(result, user_id)
     doc = result["document"]
     chunks = result["chunks"]
 
@@ -52,7 +54,7 @@ async def ingest_file(file: UploadFile = File(...), nickname: str = Form(...)):
         yield f"data: {json.dumps({'type': 'progress', 'stage': 'parse', 'message': f'解析完成，共 {store_total} 条数据，{embed_total} 条将进行语义索引', 'current': 0, 'total': embed_total})}\n\n"
 
         # Remove old data if re-uploading same doc
-        delete_document(doc["doc_id"])
+        delete_document(doc["doc_id"], user_id=user_id)
 
         # Embed only the embeddable chunks in batches with progress
         if chunks_to_embed:
@@ -87,6 +89,6 @@ async def list_documents(nickname: str = Query(...)):
     docs = get_all_documents(user_id=nickname.strip())
     result = []
     for doc in docs:
-        doc["chunk_count"] = get_chunk_count_by_doc(doc["doc_id"])
+        doc["chunk_count"] = get_chunk_count_by_doc(doc["doc_id"], user_id=nickname.strip())
         result.append(doc)
     return {"documents": result}

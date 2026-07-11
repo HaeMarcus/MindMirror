@@ -11,6 +11,28 @@ export async function registerNickname(nickname: string): Promise<{ status?: str
   return res.json();
 }
 
+export interface DemoSession {
+  status: string;
+  nickname: string;
+  display_name: string;
+  is_demo: boolean;
+}
+
+export async function startDemo(): Promise<DemoSession> {
+  const res = await fetch(`${API_BASE}/demo/start`, { method: "POST" });
+  if (!res.ok) {
+    let message = "示例人物准备失败，请稍后重试";
+    try {
+      const data = await res.json();
+      if (data.detail) message = data.detail;
+    } catch {
+      // Keep the user-facing fallback message.
+    }
+    throw new Error(message);
+  }
+  return res.json();
+}
+
 export async function checkNickname(nickname: string): Promise<boolean> {
   const res = await fetch(`${API_BASE}/check-nickname?nickname=${encodeURIComponent(nickname)}`);
   const data = await res.json();
@@ -93,13 +115,15 @@ export async function sendMessage(
   message: string,
   nickname: string,
   onChunk: (text: string) => void,
-  onDone: (messageId: number | null, sourceTypes?: string, sources?: SourceEvidence[]) => void,
+  onDone: (messageId: number | null, sourceTypes?: string, sources?: SourceEvidence[], fallback?: boolean) => void,
   onStatus?: (status: string) => void,
+  signal?: AbortSignal,
 ) {
   const res = await fetch(`${API_BASE}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message, nickname }),
+    signal,
   });
 
   if (!res.ok) {
@@ -130,17 +154,18 @@ export async function sendMessage(
           onStatus?.(data);
           currentEvent = "";
         } else if (currentEvent === "error") {
+          let errorMessage = data || "分析服务暂时不可用";
           try {
-            const errMsg = JSON.parse(data);
-            onChunk(`\n\n[错误] ${errMsg}`);
+            const parsed = JSON.parse(data);
+            errorMessage = typeof parsed === "string" ? parsed : parsed.message || errorMessage;
           } catch {
-            onChunk(`\n\n[错误] ${data}`);
+            // The server may return a plain-text SSE error.
           }
-          currentEvent = "";
+          throw new Error(errorMessage);
         } else if (currentEvent === "done") {
           try {
             const parsed = JSON.parse(data);
-            onDone(parsed.message_id ?? null, parsed.source_types ?? "", parsed.sources ?? []);
+            onDone(parsed.message_id ?? null, parsed.source_types ?? "", parsed.sources ?? [], parsed.fallback === true);
           } catch {
             onDone(null);
           }

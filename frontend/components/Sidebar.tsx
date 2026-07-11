@@ -95,6 +95,7 @@ export default function Sidebar({
             </div>
             <button
               onClick={onToggle}
+              aria-label="收起侧栏"
               className="p-1 rounded-md hover:bg-[#d4ddd0]/50 text-gray-500 transition-colors"
               title="收起侧栏"
             >
@@ -129,6 +130,7 @@ export default function Sidebar({
             <div className="space-y-0.5">
               <button
                 onClick={onOpenUpload}
+                aria-label="导入新数据"
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-600 rounded-lg hover:bg-[#d4ddd0]/50 hover:translate-x-0.5 transition-all"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -140,6 +142,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onOpenData}
+                aria-label="查看当前数据库"
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-600 rounded-lg hover:bg-[#d4ddd0]/50 hover:translate-x-0.5 transition-all"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -151,6 +154,7 @@ export default function Sidebar({
               </button>
               <button
                 onClick={onReset}
+                aria-label="清空当前用户的全部数据"
                 className="w-full flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-500 rounded-lg hover:bg-red-50 hover:text-red-500 hover:translate-x-0.5 transition-all"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

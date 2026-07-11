@@ -11,6 +11,7 @@ interface MessageBubbleProps {
   timestamp?: string;
   feedbackGiven?: "accurate" | "inaccurate" | null;
   sources?: SourceEvidence[];
+  isFallback?: boolean;
   onFeedback?: (rating: "accurate" | "inaccurate") => void;
 }
 
@@ -190,7 +191,7 @@ function FeedbackButtons({
   );
 }
 
-export default function MessageBubble({ role, content, isStreaming, timestamp, feedbackGiven, sources, onFeedback }: MessageBubbleProps) {
+export default function MessageBubble({ role, content, isStreaming, timestamp, feedbackGiven, sources, isFallback, onFeedback }: MessageBubbleProps) {
   const timeStr = formatTime(timestamp);
 
   if (role === "user") {
@@ -244,6 +245,11 @@ export default function MessageBubble({ role, content, isStreaming, timestamp, f
             {timeStr}
           </span>
         )}
+        {isFallback && (
+          <p className="ml-11 mt-1 text-[11px] text-amber-600">
+            实时模型暂时繁忙，本条为基于同一虚构数据预先审核的演示兜底结果
+          </p>
+        )}
         {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}
       </div>
     );
@@ -263,6 +269,11 @@ export default function MessageBubble({ role, content, isStreaming, timestamp, f
         <span className="text-[11px] text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity duration-200 ml-10 mt-1 select-none">
           {timeStr}
         </span>
+      )}
+      {isFallback && (
+        <p className="ml-10 mt-1 text-[11px] text-amber-600">
+          实时模型暂时繁忙，本条为基于同一虚构数据预先审核的演示兜底结果
+        </p>
       )}
       {!isStreaming && <FeedbackButtons feedbackGiven={feedbackGiven} onFeedback={onFeedback} />}
     </div>

@@ -20,6 +20,7 @@ from app.database import (
 )
 from app.llm import chat_stream, generate_rolling_summary, update_user_profile
 from app.config import APP_VERSION
+from app.demo_content import demo_fallback
 
 router = APIRouter()
 
@@ -78,6 +79,7 @@ async def chat(req: ChatRequest):
 
     def generate():
         import traceback
+        user_message_saved = False
         try:
             # 1. RAG retrieval
             yield "event: status\ndata: 正在检索相关数据...\n\n"
@@ -90,6 +92,7 @@ async def chat(req: ChatRequest):
 
             # 3. Save user message
             add_message("user", question, user_id=user_id)
+            user_message_saved = True
 
             # 4. Stream response
             yield "event: status\ndata: 正在生成回答...\n\n"
@@ -148,11 +151,21 @@ async def chat(req: ChatRequest):
 
             yield f"event: done\ndata: {json.dumps({'message_id': msg_id, 'source_types': used_sources, 'sources': evidence_sources}, ensure_ascii=False)}\n\n"
 
-        except Exception as e:
+        except Exception:
             traceback.print_exc()
-            error_msg = f"服务器内部错误：{type(e).__name__}: {e}"
-            yield f"event: error\ndata: {json.dumps(error_msg)}\n\n"
-            yield f"event: done\ndata: {json.dumps({'message_id': None, 'source_types': ''})}\n\n"
+            if user_id.startswith("demo_"):
+                if not user_message_saved:
+                    add_message("user", question, user_id=user_id)
+                fallback_text, fallback_sources = demo_fallback(question)
+                yield "event: status\ndata: 实时模型暂时繁忙，正在展示已审核的演示结果...\n\n"
+                yield f"data: {json.dumps(fallback_text, ensure_ascii=False)}\n\n"
+                msg_id = add_message("assistant", fallback_text, user_id=user_id)
+                used_sources = ",".join(sorted({source["source_type"] for source in fallback_sources}))
+                yield f"event: done\ndata: {json.dumps({'message_id': msg_id, 'source_types': used_sources, 'sources': fallback_sources, 'fallback': True}, ensure_ascii=False)}\n\n"
+                return
+
+            error_msg = "分析服务暂时没有完成响应。你的问题已保留，可以稍后重试。"
+            yield f"event: error\ndata: {json.dumps(error_msg, ensure_ascii=False)}\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
 

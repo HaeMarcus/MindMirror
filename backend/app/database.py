@@ -166,16 +166,35 @@ def get_all_documents(user_id: str) -> list[dict]:
         return [dict(r) for r in rows]
 
 
-def get_chunk_count_by_doc(doc_id: str) -> int:
+def get_chunk_count_by_doc(doc_id: str, user_id: str | None = None) -> int:
     with get_db() as db:
-        row = db.execute("SELECT COUNT(*) as cnt FROM chunks WHERE doc_id = ?", (doc_id,)).fetchone()
+        if user_id is None:
+            row = db.execute("SELECT COUNT(*) as cnt FROM chunks WHERE doc_id = ?", (doc_id,)).fetchone()
+        else:
+            row = db.execute(
+                """SELECT COUNT(*) as cnt FROM chunks c
+                   JOIN documents d ON c.doc_id = d.doc_id
+                   WHERE c.doc_id = ? AND d.user_id = ?""",
+                (doc_id, user_id),
+            ).fetchone()
         return row["cnt"]
 
 
-def delete_document(doc_id: str):
+def delete_document(doc_id: str, user_id: str) -> bool:
+    """Delete a document only when it belongs to the requesting user."""
     with get_db() as db:
+        owned = db.execute(
+            "SELECT 1 FROM documents WHERE doc_id = ? AND user_id = ?",
+            (doc_id, user_id),
+        ).fetchone()
+        if not owned:
+            return False
         db.execute("DELETE FROM chunks WHERE doc_id = ?", (doc_id,))
-        db.execute("DELETE FROM documents WHERE doc_id = ?", (doc_id,))
+        db.execute(
+            "DELETE FROM documents WHERE doc_id = ? AND user_id = ?",
+            (doc_id, user_id),
+        )
+        return True
 
 
 # ---- Chunk CRUD ----

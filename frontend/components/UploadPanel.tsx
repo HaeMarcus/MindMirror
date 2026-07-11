@@ -64,7 +64,7 @@ export default function UploadPanel({ isOpen, onClose, nickname }: UploadPanelPr
       <div className="bg-white rounded-2xl w-full max-w-lg mx-4 p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-800">导入数据</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+          <button onClick={onClose} aria-label="关闭导入数据窗口" className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
         </div>
 
         <div
