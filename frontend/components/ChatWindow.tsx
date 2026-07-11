@@ -6,6 +6,7 @@ import Sidebar from "./Sidebar";
 import UploadPanel from "./UploadPanel";
 import DataPanel from "./DataPanel";
 import NicknamePrompt from "./NicknamePrompt";
+import ResetConfirmModal from "./ResetConfirmModal";
 import { sendMessage, getMessages, resetAll, submitFeedback, type SourceEvidence } from "@/lib/api";
 
 interface Message {
@@ -63,6 +64,9 @@ export default function ChatWindow() {
   const [statusText, setStatusText] = useState("");
   const [showUpload, setShowUpload] = useState(false);
   const [showData, setShowData] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetError, setResetError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const streamBuffer = useRef("");
@@ -241,7 +245,8 @@ export default function ChatWindow() {
 
   const handleReset = async () => {
     if (!nickname) return;
-    if (!confirm("确定要清空所有数据并退出当前用户吗？（对话历史、上传的文件、记忆、用户记录都会被删除）")) return;
+    setIsResetting(true);
+    setResetError("");
     try {
       await resetAll(nickname);
       localStorage.removeItem("mm_nickname");
@@ -251,9 +256,12 @@ export default function ChatWindow() {
       setDisplayName(null);
       setIsDemo(false);
       setMessages([]);
+      setShowResetConfirm(false);
       setShowNicknamePrompt(true);
     } catch {
-      alert("清除失败，请稍后重试");
+      setResetError("清除失败，请稍后重试");
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -271,16 +279,33 @@ export default function ChatWindow() {
       {/* Nickname Prompt */}
       {showNicknamePrompt && <NicknamePrompt onConfirm={handleNicknameConfirm} />}
 
+      <ResetConfirmModal
+        isOpen={showResetConfirm}
+        isResetting={isResetting}
+        error={resetError}
+        onClose={() => {
+          if (isResetting) return;
+          setResetError("");
+          setShowResetConfirm(false);
+        }}
+        onConfirm={handleReset}
+      />
+
       {/* Sidebar */}
       {nickname && (
         <Sidebar
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
-          nickname={displayName || nickname}
+          userId={nickname}
+          displayName={displayName || nickname}
+          isDemo={isDemo}
           messageCount={messages.length}
           onOpenUpload={() => setShowUpload(true)}
           onOpenData={() => setShowData(true)}
-          onReset={handleReset}
+          onReset={() => {
+            setResetError("");
+            setShowResetConfirm(true);
+          }}
         />
       )}
 
