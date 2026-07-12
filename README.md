@@ -6,12 +6,10 @@
 
 将分散在日常记录、阶段复盘和消费账单中的数字足迹，转化为**可追溯、会持续更新的自我认知**。
 
-[![Deploy](https://github.com/HaeMarcus/MindMirror/actions/workflows/deploy.yml/badge.svg)](https://github.com/HaeMarcus/MindMirror/actions/workflows/deploy.yml)
 ![Next.js](https://img.shields.io/badge/Next.js-15-111111?logo=nextdotjs)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Python_3.11-009688?logo=fastapi)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[在线体验](http://www.mindmirror.chat) · [产品 PRD](https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb) · [系统架构](#系统架构) · [部署说明](DEPLOYMENT.md)
+[在线体验](http://www.mindmirror.chat) · [产品 PRD](https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb) · [系统架构](#系统架构)
 
 <br />
 
@@ -123,78 +121,13 @@ MindMirror 当前支持三类具有互补价值的数据：
 4. 展开证据卡片检查结论来源；
 5. 使用 👍 / 👎 提交准确度反馈。
 
-## 本地运行
+## 技术实现与选型
 
-### 前置要求
+MindMirror 的技术选择围绕三个目标展开：让对话体验足够流畅、让洞察能够追溯依据，并让个人项目在有限成本下长期稳定运行。前端使用 Next.js，主要看重其成熟的组件化能力和对复杂交互状态的支持，能够把对话、数据管理、证据展开和人格画像组织在同一个连贯界面中。后端采用 FastAPI，便于承载文件解析、检索编排和流式回答，也让不同洞察能力可以持续独立迭代。
 
-- Python 3.11+
-- Node.js 22+
-- pnpm 10+
-- Anthropic API Key
+在数据层，MindMirror 没有为了“技术复杂度”引入重量级基础设施，而是选择 SQLite 与 FAISS 的组合：前者负责结构化数据、用户隔离和长期记忆，后者负责个人知识片段的语义检索。这套方案与当前产品规模相匹配，部署简单、成本可控，也能保留未来迁移到更大规模数据服务的空间。
 
-### Backend
-
-```bash
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-cp .env.example .env
-# 在 .env 中配置 ANTHROPIC_API_KEY
-
-uvicorn app.main:app --reload --port 8000
-```
-
-### Frontend
-
-```bash
-cd frontend
-pnpm install
-pnpm dev
-```
-
-打开 `http://localhost:3000`，创建昵称并导入数据。
-
-### Docker Compose
-
-```bash
-cp .env.example .env
-# 配置 .env 后运行
-docker compose up -d --build --wait
-```
-
-## 项目结构
-
-```text
-MindMirror/
-├── backend/
-│   ├── app/
-│   │   ├── main.py                 # FastAPI 入口与健康检查
-│   │   ├── database.py             # SQLite、迁移与用户隔离
-│   │   ├── embedding.py            # 本地向量化与用户级 FAISS
-│   │   ├── retriever.py            # 多源 RAG 检索与来源排序
-│   │   ├── memory.py               # 三层记忆与更新调度
-│   │   ├── profile_precompute.py   # 上传后画像预分析
-│   │   ├── profile_scores.py       # 人格分数稳定性约束
-│   │   ├── demo_content.py         # 虚构示例与模型异常兜底
-│   │   ├── parsers/                # HTML / Markdown / CSV 解析器
-│   │   └── routers/                # ingest / chat / demo API
-│   ├── tests/                      # 数据隔离、文档 ID 与画像测试
-│   └── requirements.txt
-├── frontend/
-│   ├── app/                        # Next.js App Router
-│   ├── components/                 # 对话、数据、画像和反馈界面
-│   └── lib/api.ts                  # REST / SSE 客户端
-├── nginx/default.conf              # 统一入口与 SSE 反向代理
-├── docker-compose.yml              # 生产容器编排
-├── .github/workflows/deploy.yml    # 验证与自动发布
-└── DEPLOYMENT.md                   # 腾讯云部署说明
-```
-
-## License
-
-本项目基于 [MIT License](LICENSE) 开源。
+模型并不直接接收全部个人数据，而是基于问题检索相关证据，再结合短期上下文、滚动摘要和长期画像组织回答。生产环境通过容器化方式统一前后端和反向代理，并在每次发布前完成构建、测试与健康检查。这里的重点不是堆叠技术名词，而是让每一项技术选择都服务于产品体验、证据可信度和演示稳定性。
 
 ---
 
