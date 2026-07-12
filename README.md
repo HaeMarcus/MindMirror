@@ -15,13 +15,23 @@
 
 <br />
 
-<img src="docs/assets/mindmirror-product-overview.png" alt="MindMirror 产品主界面：虚构示例人物、数据管理、大五人格雷达图与洞察入口" width="100%" />
+<img src="docs/assets/mindmirror-product-overview.webp" alt="MindMirror 产品主界面：虚构示例人物、数据管理、大五人格雷达图与洞察入口" width="100%" />
 
 <sub>虚构示例人物“许遥”的产品主界面</sub>
 
 </div>
 
 ---
+
+## 为什么做 MindMirror
+
+Hi，我是 Marcus。长期以来，我习惯用不同工具记录生活：灵感散落在 Flomo，复盘沉淀在 Markdown 文档，消费行为则留在记账软件里。这些数字足迹共同描述了一个人，却长期处于彼此割裂的状态。
+
+当我回看这些跨平台数据时，产生了一个问题：**如果 AI 不只听我如何描述自己，而是同时观察我记录了什么、如何复盘，以及把钱花在了哪里，它是否能提供更接近真实行为的第三方视角？**
+
+MindMirror 由此开始。它试图解决的不是“再做一个聊天机器人”，而是如何把多源数据、证据链、长期记忆和可解释的人格画像组合成一套完整的自我觉察体验。项目从 PRD、交互原型、RAG 与记忆设计开始，经过多轮线上使用和部署迭代，逐步形成了当前版本。
+
+完整的需求背景、用户流程和产品取舍见 [MindMirror 产品需求文档](https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb)。
 
 ## 产品概览
 
@@ -38,6 +48,7 @@ MindMirror 是一个已经部署运行的产品化原型。它不把 AI 定位�
 ### 核心体验
 
 ```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#f7faf5", "primaryColor": "#eef4ea", "primaryTextColor": "#344238", "primaryBorderColor": "#8a9a7e", "lineColor": "#8a9a7e", "secondaryColor": "#fff7ed", "tertiaryColor": "#ffffff", "fontFamily": "Arial, sans-serif"}}}%%
 flowchart LR
     A[导入个人数据] --> B[解析与语义索引]
     B --> C[开始对话]
@@ -48,16 +59,6 @@ flowchart LR
     F --> H[随对话持续更新]
     G --> H
 ```
-
-## 为什么做 MindMirror
-
-Hi，我是 Marcus。长期以来，我习惯用不同工具记录生活：灵感散落在 Flomo，复盘沉淀在 Markdown 文档，消费行为则留在记账软件里。这些数字足迹共同描述了一个人，却长期处于彼此割裂的状态。
-
-当我回看这些跨平台数据时，产生了一个问题：**如果 AI 不只听我如何描述自己，而是同时观察我记录了什么、如何复盘，以及把钱花在了哪里，它是否能提供更接近真实行为的第三方视角？**
-
-MindMirror 由此开始。它试图解决的不是“再做一个聊天机器人”，而是如何把多源数据、证据链、长期记忆和可解释的人格画像组合成一套完整的自我觉察体验。项目从 PRD、交互原型、RAG 与记忆设计开始，经过多轮线上使用和部署迭代，逐步形成了当前版本。
-
-完整的需求背景、用户流程和产品取舍见 [MindMirror 产品需求文档](https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb)。
 
 ## 核心产品能力
 
@@ -115,48 +116,12 @@ MindMirror 当前支持三类具有互补价值的数据：
 
 这使首次体验不依赖用户准备文件，也避免演示过程中因模型波动失去完整产品闭环。
 
-## 信任、隐私与产品边界
-
-MindMirror 处理的是高度个人化的数据，因此 README 不使用“数据绝不离开本机”这类模糊承诺，而是明确说明当前边界：
-
-- 文件解析、Embedding、SQLite 存储和 FAISS 向量索引在 MindMirror 服务端完成；
-- 每个用户拥有独立的数据命名空间和 FAISS 索引，文档、消息和记忆按用户隔离；
-- 对话时仅将检索出的相关证据、必要记忆与当前问题发送给配置的大模型服务；
-- 用户可以主动清除当前账号的文件、对话、记忆、反馈关联和向量索引；
-- 开发者分析接口由管理员令牌保护，未配置令牌时默认不可访问；
-- 示例数据完全虚构，不使用个人真实数据作为公开演示内容；
-- 大五人格与 MBTI 属于自我反思工具，不替代专业心理测量或诊断。
-
 ## 系统架构
-
-```mermaid
-flowchart TB
-    U[Web Client] -->|REST / SSE| N[Nginx]
-    N --> F[Next.js 15 / React 19]
-    N --> B[FastAPI]
-
-    B --> P[HTML / Markdown / CSV Parsers]
-    P --> E[bge-small-zh-v1.5]
-    E --> V[User-scoped FAISS Index]
-    P --> S[SQLite]
-
-    B --> R[Source-aware Retriever]
-    V --> R
-    S --> R
-    R --> C[Evidence Compression]
-
-    S --> M[Short Memory / Rolling Summary / User Profile]
-    C --> L[Claude Sonnet 4.6]
-    M --> L
-    L -->|Structured Streaming Response| B
-
-    B --> A[Feedback Analytics]
-    B --> D[Demo Fallback]
-```
 
 ### 从上传到洞察
 
 ```mermaid
+%%{init: {"theme": "base", "themeVariables": {"background": "#f7faf5", "primaryColor": "#eef4ea", "primaryTextColor": "#344238", "primaryBorderColor": "#8a9a7e", "lineColor": "#8a9a7e", "secondaryColor": "#fff7ed", "tertiaryColor": "#ffffff", "actorBkg": "#eef4ea", "actorBorder": "#8a9a7e", "actorTextColor": "#344238", "signalColor": "#6f8065", "signalTextColor": "#344238", "noteBkgColor": "#fff7ed", "noteBorderColor": "#e9a65b", "fontFamily": "Arial, sans-serif"}}}%%
 sequenceDiagram
     participant User as 用户
     participant API as FastAPI
@@ -173,48 +138,6 @@ sequenceDiagram
     LLM-->>User: SSE 结构化流式回答
     API-->>User: 首轮回答后激活初步画像
 ```
-
-### 技术选型与权衡
-
-| 领域 | 选择 | 取舍考量 |
-|---|---|---|
-| 前端 | Next.js 15 + React 19 + Tailwind CSS 4 | App Router、流式交互和轻量组件化能力 |
-| API | FastAPI | 异步接口、类型约束和 SSE 支持清晰 |
-| Embedding | bge-small-zh-v1.5（服务端本地） | 中文语义效果与部署成本平衡，避免额外 Embedding API 依赖 |
-| 向量检索 | FAISS IndexFlatIP | 当前数据规模下采用精确搜索，架构简单且可控 |
-| 业务存储 | SQLite | 单机部署零运维，并通过用户字段实现数据隔离 |
-| 检索策略 | 向量检索 + 来源感知排序 | 针对财务、复盘、日常记录等问题提升对应来源权重 |
-| 模型 | Claude Sonnet 4.6 | 长文本理解、结构化表达与证据综合能力 |
-| 流式协议 | SSE | 单向生成场景更轻量，适合反向代理和浏览器原生消费 |
-
-## 工程化与线上运行
-
-MindMirror 当前生产环境运行在腾讯云轻量应用服务器，而不是只停留在本地演示。
-
-| 能力 | 当前实现 |
-|---|---|
-| 容器化 | Frontend、Backend、Nginx 通过 Docker Compose 编排 |
-| 自动发布 | `main` 更新后由 GitHub Actions 自动部署 |
-| 发布门禁 | 前端生产构建、后端语法检查和单元测试通过后才进入部署 |
-| 服务器更新 | Actions 上传已验证源码，避免中国大陆服务器直接拉取 GitHub 的网络波动 |
-| 健康检查 | Docker 容器健康状态 + 公网 `/api/health` 双重检查 |
-| 数据持久化 | SQLite 与用户向量索引存放在独立 Docker Volume |
-| 可观测反馈 | 准确度、版本、来源与用户维度的受保护反馈看板 |
-| 异常体验 | 明确的超时/重试提示；示例模式具备审核过的回答兜底 |
-
-部署流程：
-
-```mermaid
-flowchart LR
-    A[Push to main] --> B[Frontend Build]
-    B --> C[Backend Tests]
-    C --> D[Upload Verified Source]
-    D --> E[Docker Compose Build]
-    E --> F[Restart and Wait for Health]
-    F --> G[Public Health Check]
-```
-
-完整的服务器准备、GitHub Secrets 和发布说明见 [DEPLOYMENT.md](DEPLOYMENT.md)。
 
 ## 快速体验
 
@@ -296,15 +219,6 @@ MindMirror/
 ├── .github/workflows/deploy.yml    # 验证与自动发布
 └── DEPLOYMENT.md                   # 腾讯云部署说明
 ```
-
-## Roadmap
-
-- [ ] 完成正式域名、HTTPS 与全球访问加速
-- [ ] 扩展更多日记、知识库和财务数据连接器
-- [ ] 支持导出阶段性个人洞察报告
-- [ ] 增加人格画像变化时间线与证据对照
-- [ ] 完善数据授权范围与更细粒度的删除能力
-- [ ] 引入更完整的运行监控与异常告警
 
 ## License
 
