@@ -7,12 +7,22 @@ import { getProfile, type BigFive } from "@/lib/api";
 interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
-  nickname: string;
+  userId: string;
+  displayName: string;
+  isDemo: boolean;
   messageCount: number;
   onOpenUpload: () => void;
   onOpenData: () => void;
   onReset: () => void;
 }
+
+const DEMO_BIG_FIVE: BigFive = {
+  openness: 84,
+  conscientiousness: 68,
+  extraversion: 72,
+  agreeableness: 79,
+  neuroticism: 36,
+};
 
 function getDaysAgo(dateStr: string | null): number | null {
   if (!dateStr) return null;
@@ -25,29 +35,33 @@ function getDaysAgo(dateStr: string | null): number | null {
 export default function Sidebar({
   isOpen,
   onToggle,
-  nickname,
+  userId,
+  displayName,
+  isDemo,
   messageCount,
   onOpenUpload,
   onOpenData,
   onReset,
 }: SidebarProps) {
-  const [bigFive, setBigFive] = useState<BigFive | null>(null);
+  const [bigFive, setBigFive] = useState<BigFive | null>(isDemo ? DEMO_BIG_FIVE : null);
   const [companionDays, setCompanionDays] = useState<number | null>(null);
 
   // Load profile when sidebar opens or after new messages
   useEffect(() => {
-    if (!isOpen || !nickname) return;
+    if (!isOpen || !userId) return;
 
     let cancelled = false;
     const fetchProfile = () => {
-      getProfile(nickname)
+      getProfile(userId)
         .then((data) => {
           if (cancelled) return;
-          if (data.profile.big_five) setBigFive(data.profile.big_five);
+          setBigFive(data.profile.big_five || (isDemo ? DEMO_BIG_FIVE : null));
           const days = getDaysAgo(data.created_at);
           setCompanionDays(days);
         })
-        .catch(() => {});
+        .catch(() => {
+          if (!cancelled) setBigFive(isDemo ? DEMO_BIG_FIVE : null);
+        });
     };
 
     // Fetch immediately when an answer completes, then keep a short polling
@@ -59,7 +73,7 @@ export default function Sidebar({
       cancelled = true;
       timers.forEach(clearTimeout);
     };
-  }, [isOpen, nickname, messageCount]);
+  }, [isOpen, userId, isDemo, messageCount]);
 
   return (
     <>
@@ -108,7 +122,7 @@ export default function Sidebar({
           <div className="px-3 pt-3 pb-4">
             <div className="flex flex-col items-center gap-1 px-2.5 py-2.5 rounded-xl bg-[#e8ede4]/70 backdrop-blur-sm border border-[#d4ddd0]/40 transition-all duration-200 cursor-default">
               <span className="text-sm text-gray-700 font-medium truncate w-full text-center">
-                你好，{nickname} 👋
+                你好，{displayName} 👋
               </span>
               {companionDays !== null && (
                 <span className="text-[11px] text-gray-400">
