@@ -34,44 +34,44 @@
   <path class="line" d="M 1012 202 L 1012 230"/>
   <path class="accent-line" d="M 920 275 C 875 275 875 338 822 338 L 760 338"/>
 
-  <g filter="url(#shadow)">
-    <rect x="64" y="154" width="152" height="86" rx="17" fill="#ffffff" stroke="#b8c6b2" stroke-width="1.8"/>
+  <g>
+    <rect x="64" y="154" width="152" height="86" rx="17" fill="#ffffff" stroke="#b8c6b2" stroke-width="1.8" filter="url(#shadow)"/>
     <text x="140" y="190" class="node-title">导入个人数据</text>
     <text x="140" y="215" class="node-note">日记 · 复盘 · 账单</text>
   </g>
 
-  <g filter="url(#shadow)">
-    <rect x="264" y="154" width="166" height="86" rx="17" fill="#eef4ea" stroke="#b8c6b2" stroke-width="1.8"/>
+  <g>
+    <rect x="264" y="154" width="166" height="86" rx="17" fill="#eef4ea" stroke="#b8c6b2" stroke-width="1.8" filter="url(#shadow)"/>
     <text x="347" y="190" class="node-title">解析与语义索引</text>
     <text x="347" y="215" class="node-note">建立可检索知识片段</text>
   </g>
 
-  <g filter="url(#shadow)">
-    <rect x="478" y="154" width="142" height="86" rx="17" fill="#ffffff" stroke="#b8c6b2" stroke-width="1.8"/>
+  <g>
+    <rect x="478" y="154" width="142" height="86" rx="17" fill="#ffffff" stroke="#b8c6b2" stroke-width="1.8" filter="url(#shadow)"/>
     <text x="549" y="190" class="node-title">开始对话</text>
     <text x="549" y="215" class="node-note">从真实问题出发</text>
   </g>
 
-  <g filter="url(#shadow)">
-    <rect x="668" y="154" width="174" height="86" rx="17" fill="#eef4ea" stroke="#b8c6b2" stroke-width="1.8"/>
+  <g>
+    <rect x="668" y="154" width="174" height="86" rx="17" fill="#eef4ea" stroke="#b8c6b2" stroke-width="1.8" filter="url(#shadow)"/>
     <text x="755" y="190" class="node-title">结构化洞察</text>
     <text x="755" y="215" class="node-note">结论 · 模式 · 证据</text>
   </g>
 
-  <g filter="url(#shadow)">
-    <rect x="920" y="114" width="184" height="86" rx="17" fill="#ffffff" stroke="#b8c6b2" stroke-width="1.8"/>
+  <g>
+    <rect x="920" y="114" width="184" height="86" rx="17" fill="#ffffff" stroke="#b8c6b2" stroke-width="1.8" filter="url(#shadow)"/>
     <text x="1012" y="150" class="node-title">查看证据来源</text>
     <text x="1012" y="175" class="node-note">回溯文件与原始片段</text>
   </g>
 
-  <g filter="url(#shadow)">
-    <rect x="920" y="232" width="184" height="86" rx="17" fill="#fff7ed" stroke="#f2bd87" stroke-width="1.8"/>
+  <g>
+    <rect x="920" y="232" width="184" height="86" rx="17" fill="#fff7ed" stroke="#f2bd87" stroke-width="1.8" filter="url(#shadow)"/>
     <text x="1012" y="268" class="node-title">大五人格画像</text>
     <text x="1012" y="293" class="node-note">随证据逐步校准</text>
   </g>
 
-  <g filter="url(#shadow)">
-    <rect x="564" y="301" width="196" height="74" rx="37" fill="#fff7ed" stroke="#f2bd87" stroke-width="1.8"/>
+  <g>
+    <rect x="564" y="301" width="196" height="74" rx="37" fill="#fff7ed" stroke="#f2bd87" stroke-width="1.8" filter="url(#shadow)"/>
     <text x="662" y="333" class="node-title">准确度反馈</text>
     <text x="662" y="357" class="node-note">推动下一轮持续更新</text>
   </g>
