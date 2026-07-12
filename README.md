@@ -11,7 +11,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-Python_3.11-009688?logo=fastapi)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-[在线体验（见仓库 About）](#快速体验) · [产品 PRD](https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb) · [系统架构](#系统架构) · [部署说明](DEPLOYMENT.md)
+[在线体验](http://www.mindmirror.chat) · [产品 PRD](https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb) · [系统架构](#系统架构) · [部署说明](DEPLOYMENT.md)
 
 <br />
 
@@ -120,28 +120,11 @@ MindMirror 当前支持三类具有互补价值的数据：
 
 ### 从上传到洞察
 
-```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#f7faf5", "primaryColor": "#eef4ea", "primaryTextColor": "#344238", "primaryBorderColor": "#8a9a7e", "lineColor": "#8a9a7e", "secondaryColor": "#fff7ed", "tertiaryColor": "#ffffff", "actorBkg": "#eef4ea", "actorBorder": "#8a9a7e", "actorTextColor": "#344238", "signalColor": "#6f8065", "signalTextColor": "#344238", "noteBkgColor": "#fff7ed", "noteBorderColor": "#e9a65b", "fontFamily": "Arial, sans-serif"}}}%%
-sequenceDiagram
-    participant User as 用户
-    participant API as FastAPI
-    participant Store as SQLite + FAISS
-    participant Profile as 画像预分析
-    participant LLM as Claude Sonnet
-
-    User->>API: 上传 HTML / MD / CSV
-    API->>Store: 解析、向量化并按用户隔离存储
-    API-->>Profile: 合并调度后台画像分析
-    User->>API: 发起问题
-    API->>Store: 多源检索与来源感知排序
-    API->>LLM: 问题 + 记忆 + 压缩证据
-    LLM-->>User: SSE 结构化流式回答
-    API-->>User: 首轮回答后激活初步画像
-```
+<img src="docs/assets/mindmirror-upload-flow.svg" alt="MindMirror 从上传数据到生成证据型洞察的处理流程" width="100%" />
 
 ## 快速体验
 
-线上地址维护在仓库右侧 **About** 区域。
+[打开 MindMirror 在线体验](http://www.mindmirror.chat)。
 
 首次体验建议选择“直接体验虚构示例人物”：
 
