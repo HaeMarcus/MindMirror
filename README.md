@@ -47,18 +47,7 @@ MindMirror 是一个已经部署运行的产品化原型。它不把 AI 定位�
 
 ### 核心体验
 
-```mermaid
-%%{init: {"theme": "base", "themeVariables": {"background": "#f7faf5", "primaryColor": "#eef4ea", "primaryTextColor": "#344238", "primaryBorderColor": "#8a9a7e", "lineColor": "#8a9a7e", "secondaryColor": "#fff7ed", "tertiaryColor": "#ffffff", "fontFamily": "Arial, sans-serif"}}}%%
-flowchart LR
-    A[导入个人数据] --> B[解析与语义索引]
-    B --> C[开始对话]
-    C --> D[结构化洞察]
-    D --> E[查看证据来源]
-    D --> F[大五人格画像]
-    E --> G[准确度反馈]
-    F --> H[随对话持续更新]
-    G --> H
-```
+<img src="docs/assets/mindmirror-core-experience.svg" alt="MindMirror 从导入个人数据到持续更新洞察的核心体验" width="100%" />
 
 ## 核心产品能力
 
