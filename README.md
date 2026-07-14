@@ -9,7 +9,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-15-111111?logo=nextdotjs)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Python_3.11-009688?logo=fastapi)
 
-[在线体验](http://www.mindmirror.chat) · [产品 PRD](https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb) · [系统架构](#系统架构)
+[在线体验](https://mindmirror.chat) · [产品 PRD](https://icnmqhcc34ly.feishu.cn/wiki/ENsuwN0p3iKvf9k7AHqcoRi5nOb) · [系统架构](#系统架构)
 
 <br />
 
@@ -111,7 +111,7 @@ MindMirror 当前支持三类具有互补价值的数据：
 
 ## 快速体验
 
-[打开 MindMirror 在线体验](http://www.mindmirror.chat)。
+[打开 MindMirror 在线体验](https://mindmirror.chat)。
 
 首次体验建议选择“直接体验虚构示例人物”：
 
